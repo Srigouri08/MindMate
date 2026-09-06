@@ -65,15 +65,86 @@ textarea {
   color: #222;
 }
 
-textarea {
-  min-height: 160px;
-  resize: vertical;
-}
-
 input:focus,
 textarea:focus {
   outline: 2px solid #6c4cff;
   border-color: transparent;
+}
+
+/* Book-style journal page */
+.book-page {
+  position: relative;
+  margin: 15px 0 5px;
+  padding: 24px 22px 18px 48px;
+  border: 1px solid #dfd1b5;
+  border-radius: 6px 14px 14px 6px;
+  background: #fffdf5;
+  box-shadow: 4px 5px 0 #eadfc9, 0 8px 20px rgba(70, 50, 20, 0.08);
+  overflow: hidden;
+}
+
+.book-page::before {
+  content: "";
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e5b9b9;
+}
+
+.book-page::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 22px,
+    rgba(120, 100, 70, 0.12) 23px,
+    transparent 24px
+  );
+}
+
+.book-title {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 4px;
+  color: #806f58;
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-style: italic;
+}
+
+.book-page textarea {
+  position: relative;
+  z-index: 1;
+  min-height: 210px;
+  margin: 0;
+  padding: 10px 0 10px 0;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  resize: vertical;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 31px,
+    #ded6c6 32px,
+    transparent 33px
+  );
+  color: #3e352b;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 32px;
+}
+
+.book-page textarea:focus {
+  outline: none;
+  border: none;
 }
 
 button {
@@ -265,6 +336,31 @@ button:active {
   border-color: #49435a;
 }
 
+.dark-mode .book-page {
+  background: #302c2b;
+  border-color: #51453b;
+  box-shadow: 4px 5px 0 #40362f, 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .book-page::before {
+  background: #765b5b;
+}
+
+.dark-mode .book-page textarea {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 31px,
+    #514940 32px,
+    transparent 33px
+  );
+  color: #f1e9df;
+}
+
+.dark-mode .book-title {
+  color: #cbb9a3;
+}
+
 @media (max-width: 600px) {
   .app {
     padding: 25px 14px 50px;
@@ -290,5 +386,13 @@ button:active {
 
   .journal-header h2 {
     font-size: 20px;
+  }
+
+  .book-page {
+    padding-left: 42px;
+  }
+
+  .book-page::before {
+    left: 26px;
   }
 }

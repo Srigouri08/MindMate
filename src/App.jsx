@@ -162,16 +162,18 @@ function App() {
     setEntries([]);
   }
 
-  // Format the date stored in Firestore
-  function formatDate(createdAt) {
+  // Format the date and time stored in Firestore
+  function formatDateTime(createdAt) {
     if (!createdAt) return "Date unavailable";
 
     const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
 
-    return date.toLocaleDateString("en-IN", {
+    return date.toLocaleString("en-IN", {
       day: "numeric",
       month: "long",
       year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     });
   }
 
@@ -286,11 +288,14 @@ function App() {
                 </button>
               </div>
 
-              <textarea
-                value={entry}
-                onChange={(e) => setEntry(e.target.value)}
-                placeholder="Write about your day..."
-              />
+              <div className="book-page">
+                <div className="book-title">Dear Journal,</div>
+                <textarea
+                  value={entry}
+                  onChange={(e) => setEntry(e.target.value)}
+                  placeholder="Write about your day..."
+                />
+              </div>
 
               <button onClick={analyzeEntry}>✨ Analyze with AI</button>
 
@@ -352,7 +357,7 @@ function App() {
             ) : (
               entries.map((item) => (
                 <div className="entry" key={item.id}>
-                  <div className="entry-date">📅 {formatDate(item.createdAt)}</div>
+                  <div className="entry-date">📅 {formatDateTime(item.createdAt)}</div>
                   <p>{item.text}</p>
                 </div>
               ))

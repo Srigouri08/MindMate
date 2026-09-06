@@ -5,15 +5,28 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { collection, addDoc, query, where, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
 import { auth, db } from "./firebase";
 import "./App.css";
 
-const stickers = [
-  "💕", "⭐", "🌸", "🦋", "🎀", "🌿", "🌷", "🌻", "☁️", "🌙",
-  "☀️", "🌈", "🧸", "🍓", "🍒", "☕", "📚", "💌", "✨", "💗",
-  "🌱", "🤍", "😊", "🎟️", "💜",
-];
+const stickerSets = {
+  All: ["💕", "⭐", "🌸", "🦋", "🎀", "🌿", "🌷", "🌻", "☁️", "🌙", "☀️", "🌈", "🧸", "🍓", "🍒", "☕", "📚", "💌", "✨", "💗"],
+  Nature: ["🌿", "🌸", "🌷", "🌻", "☁️", "🌙", "☀️", "🌈", "🌱", "🍃"],
+  Cute: ["🧸", "🍓", "🍒", "💕", "💗", "🎀", "🦋", "😊", "🤍", "🌸"],
+  Objects: ["☕", "📚", "💌", "🎟️", "🎀", "🧸", "📖", "✏️", "🎧", "🕯️"],
+  Symbols: ["⭐", "✨", "💜", "💕", "💗", "🤍", "🌙", "☀️", "♡", "✦"],
+};
+
+const categories = Object.keys(stickerSets);
 
 function App() {
   const [user, setUser] = useState(null);
@@ -27,9 +40,13 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("mindmate-dark-mode") === "true");
   const [showStickers, setShowStickers] = useState(false);
+  const [stickerCategory, setStickerCategory] = useState("All");
   const [pageStickers, setPageStickers] = useState([]);
+  const [selectedStickerId, setSelectedStickerId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [screen, setScreen] = useState("new");
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [search, setSearch] = useState("");
   const bookRef = useRef(null);
   const dragRef = useRef(null);
 
@@ -47,7 +64,7 @@ function App() {
     }
     const q = query(collection(db, "journalEntries"), where("userId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
       data.sort((a, b) => getDate(b.createdAt) - getDate(a.createdAt));
       setEntries(data);
     });
@@ -62,7 +79,11 @@ function App() {
   function formatDateTime(createdAt) {
     if (!createdAt) return "Date unavailable";
     return getDate(createdAt).toLocaleString("en-IN", {
-      day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     });
   }
 
@@ -72,40 +93,104 @@ function App() {
     setEntry("");
     setAnalysis("");
     setPageStickers([]);
+    setSelectedStickerId(null);
     setMessage("");
     setShowStickers(false);
+    setOpenMenuId(null);
   }
 
   function openJournal() {
     setScreen("journal");
     setSelectedEntry(null);
     setShowStickers(false);
+    setOpenMenuId(null);
   }
 
   function viewEntry(item) {
     setSelectedEntry(item);
     setEntry(item.text || "");
     setPageStickers(item.stickers || []);
+    setSelectedStickerId(null);
     setAnalysis("");
     setMessage("");
     setScreen("view");
     setShowStickers(false);
+    setOpenMenuId(null);
+  }
+
+  function editEntry(item) {
+    setSelectedEntry(item);
+    setEntry(item.text || "");
+    setPageStickers(item.stickers || []);
+    setSelectedStickerId(null);
+    setAnalysis("");
+    setMessage("");
+    setScreen("edit");
+    setShowStickers(false);
+    setOpenMenuId(null);
+  }
+
+  async function deleteEntry(item) {
+    const confirmed = window.confirm("Delete this journal entry? This cannot be undone.");
+    if (!confirmed) return;
+    try {
+      await deleteDoc(doc(db, "journalEntries", item.id));
+      setOpenMenuId(null);
+      if (selectedEntry?.id === item.id) startNewEntry();
+      setMessage("Journal entry deleted.");
+    } catch (error) {
+      console.error(error);
+      setMessage("Could not delete the entry.");
+    }
   }
 
   function addSticker(emoji) {
     const positions = [
-      { x: 10, y: 20 }, { x: 76, y: 18 }, { x: 18, y: 68 },
-      { x: 74, y: 68 }, { x: 45, y: 78 }, { x: 58, y: 28 },
+      { x: 12, y: 22 }, { x: 78, y: 20 }, { x: 20, y: 70 },
+      { x: 76, y: 70 }, { x: 47, y: 80 }, { x: 58, y: 30 },
     ];
     const position = positions[pageStickers.length % positions.length];
-    setPageStickers((current) => [
-      ...current,
-      { id: `${Date.now()}-${Math.random()}`, emoji, x: position.x, y: position.y },
-    ]);
+    const newSticker = {
+      id: `${Date.now()}-${Math.random()}`,
+      emoji,
+      x: position.x,
+      y: position.y,
+      size: 44,
+      rotation: 0,
+    };
+    setPageStickers((current) => [...current, newSticker]);
+    setSelectedStickerId(newSticker.id);
+  }
+
+  function updateSelectedSticker(changes) {
+    setPageStickers((current) => current.map((sticker) =>
+      sticker.id === selectedStickerId ? { ...sticker, ...changes } : sticker
+    ));
+  }
+
+  function resizeSticker(amount) {
+    const sticker = pageStickers.find((item) => item.id === selectedStickerId);
+    if (!sticker) return;
+    updateSelectedSticker({ size: Math.max(24, Math.min(90, sticker.size + amount)) });
+  }
+
+  function rotateSticker(amount) {
+    const sticker = pageStickers.find((item) => item.id === selectedStickerId);
+    if (!sticker) return;
+    updateSelectedSticker({ rotation: sticker.rotation + amount });
+  }
+
+  function removeSelectedSticker() {
+    if (!selectedStickerId) return;
+    setPageStickers((current) => current.filter((sticker) => sticker.id !== selectedStickerId));
+    setSelectedStickerId(null);
   }
 
   function startStickerDrag(event, sticker) {
+    if (screen === "view") return;
     if (!bookRef.current) return;
+    event.stopPropagation();
+    setSelectedStickerId(sticker.id);
     const rect = bookRef.current.getBoundingClientRect();
     const stickerX = rect.left + (sticker.x / 100) * rect.width;
     const stickerY = rect.top + (sticker.y / 100) * rect.height;
@@ -125,13 +210,12 @@ function App() {
     const y = ((event.clientY - rect.top - drag.offsetY) / rect.height) * 100;
     setPageStickers((current) => current.map((sticker) =>
       sticker.id === drag.id
-        ? { ...sticker, x: Math.max(5, Math.min(92, x)), y: Math.max(7, Math.min(88, y)) }
+        ? { ...sticker, x: Math.max(5, Math.min(94, x)), y: Math.max(7, Math.min(88, y)) }
         : sticker
     ));
   }
 
   function stopStickerDrag() { dragRef.current = null; }
-  function removeSticker(id) { setPageStickers((current) => current.filter((sticker) => sticker.id !== id)); }
 
   async function handleAuth() {
     setMessage("");
@@ -141,22 +225,35 @@ function App() {
       else await createUserWithEmailAndPassword(auth, email, password);
       setEmail("");
       setPassword("");
-    } catch (error) { setMessage(error.message); }
+    } catch (error) {
+      setMessage(error.message);
+    }
   }
 
   async function saveEntry() {
     if (!entry.trim()) return setMessage("Please write something first.");
     try {
-      await addDoc(collection(db, "journalEntries"), {
-        userId: user.uid,
-        text: entry.trim(),
-        createdAt: new Date(),
-        stickers: pageStickers,
-      });
-      setEntry("");
-      setAnalysis("");
-      setPageStickers([]);
-      setMessage("Journal entry saved! 💜");
+      if (screen === "edit" && selectedEntry) {
+        await updateDoc(doc(db, "journalEntries", selectedEntry.id), {
+          text: entry.trim(),
+          stickers: pageStickers,
+        });
+        setMessage("Your journal entry was updated! 💜");
+        setSelectedEntry((current) => current ? { ...current, text: entry.trim(), stickers: pageStickers } : current);
+        setScreen("view");
+      } else {
+        await addDoc(collection(db, "journalEntries"), {
+          userId: user.uid,
+          text: entry.trim(),
+          createdAt: new Date(),
+          stickers: pageStickers,
+        });
+        setEntry("");
+        setAnalysis("");
+        setPageStickers([]);
+        setSelectedStickerId(null);
+        setMessage("Journal entry saved! 💜");
+      }
     } catch (error) {
       console.error(error);
       setMessage("Could not save your entry.");
@@ -207,25 +304,29 @@ function App() {
   }
 
   const isViewScreen = screen === "view" && selectedEntry;
-  const displayedDate = isViewScreen ? selectedEntry.createdAt : new Date();
+  const isEditable = screen === "new" || screen === "edit";
+  const displayedDate = isViewScreen ? selectedEntry.createdAt : (screen === "edit" ? selectedEntry.createdAt : new Date());
+  const filteredEntries = entries.filter((item) => (item.text || "").toLowerCase().includes(search.toLowerCase()));
+  const selectedSticker = pageStickers.find((item) => item.id === selectedStickerId);
 
   return (
-    <div className={`app ${darkMode ? "dark-mode" : ""}`} onPointerMove={moveSticker} onPointerUp={stopStickerDrag} onPointerCancel={stopStickerDrag}>
+    <div className={`app ${darkMode ? "dark-mode" : ""}`} onPointerMove={moveSticker} onPointerUp={stopStickerDrag} onPointerCancel={stopStickerDrag} onClick={() => setOpenMenuId(null)}>
       <header className="topbar">
         <div className="brand">
-          <div className="brand-icon">♡</div>
+          <div className="brand-icon"><span>🧠</span><b>♡</b></div>
           <div><h1>MindMate</h1><span>JOURNAL • REFLECT • GROW</span></div>
         </div>
         <div className="top-actions">
-          {user && <button className={`icon-button ${showStickers ? "active" : ""}`} onClick={() => setShowStickers(!showStickers)} title="Stickers">🎀</button>}
+          {user && <button className={`icon-button ${showStickers ? "active" : ""}`} onClick={(e) => { e.stopPropagation(); setShowStickers(!showStickers); }} title="Add stickers">🎀</button>}
           <button className="icon-button" onClick={() => setDarkMode(!darkMode)} title="Toggle dark mode">{darkMode ? "☀️" : "🌙"}</button>
+          {user && <div className="profile-pill"><span>{user.email?.[0]?.toUpperCase() || "S"}</span><strong>{user.email?.split("@")[0]}</strong></div>}
         </div>
       </header>
 
       {!user ? (
         <div className="login-layout">
           <div className="login-card">
-            <div className="login-heart">♡</div>
+            <div className="login-heart"><span>🧠</span>♡</div>
             <h2>{isLogin ? "Welcome Back" : "Create Your Journal"}</h2>
             <p className="login-subtitle">{isLogin ? "A quiet little place for your thoughts." : "Your thoughts deserve a safe place."}</p>
             <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -239,7 +340,7 @@ function App() {
         <div className="workspace">
           <aside className="sidebar">
             <button className={`side-item ${screen === "new" ? "active" : ""}`} onClick={startNewEntry}><span>✎</span> New Entry</button>
-            <button className={`side-item ${screen === "journal" || screen === "view" ? "active" : ""}`} onClick={openJournal}><span>📖</span> My Journal</button>
+            <button className={`side-item ${screen === "journal" || screen === "view" || screen === "edit" ? "active" : ""}`} onClick={openJournal}><span>📖</span> My Journal</button>
             <button className="side-item" onClick={startNewEntry}><span>♡</span> Little Moments</button>
             <div className="sidebar-bottom">
               <button className="side-item" onClick={() => setDarkMode(!darkMode)}><span>⚙</span> {darkMode ? "Light Mode" : "Dark Mode"}</button>
@@ -250,19 +351,20 @@ function App() {
           <main className="main-content">
             {screen === "journal" ? (
               <section className="journal-list-screen">
-                <div className="section-intro">
-                  <p className="eyebrow">Your memories</p>
-                  <h2>My Journal 📖</h2>
-                  <p>Every little moment you've saved, in one place.</p>
-                </div>
+                <div className="section-intro"><p className="eyebrow">Your memories</p><h2>My Journal 📖</h2><p>Your journey, one entry at a time.</p></div>
+                <div className="journal-search"><span>⌕</span><input placeholder="Search entries..." value={search} onChange={(e) => setSearch(e.target.value)} /></div>
                 <div className="date-list">
-                  {entries.length === 0 ? (
-                    <div className="empty-journal"><div>📖</div><h3>Your journal is waiting.</h3><p>Write your first entry and come back to find it here.</p><button onClick={startNewEntry}>✎ Write an Entry</button></div>
-                  ) : entries.map((item) => (
+                  {filteredEntries.length === 0 ? (
+                    <div className="empty-journal"><div>📖</div><h3>{entries.length ? "No matching entries." : "Your journal is waiting."}</h3><p>{entries.length ? "Try a different search." : "Write your first entry and come back to find it here."}</p>{!entries.length && <button onClick={startNewEntry}>✎ Write an Entry</button>}</div>
+                  ) : filteredEntries.map((item) => (
                     <div className="date-entry" key={item.id}>
                       <div className="date-entry-icon">📅</div>
-                      <div className="date-entry-info"><strong>{formatDateTime(item.createdAt)}</strong><span>{item.text?.slice(0, 80)}{item.text?.length > 80 ? "…" : ""}</span></div>
+                      <div className="date-entry-info"><strong>{formatDateTime(item.createdAt)}</strong><span>{item.text?.slice(0, 90)}{item.text?.length > 90 ? "…" : ""}</span></div>
                       <button className="view-entry-button" onClick={() => viewEntry(item)}>View Entry →</button>
+                      <div className="entry-menu-wrap" onClick={(e) => e.stopPropagation()}>
+                        <button className="dots-button" onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}>⋮</button>
+                        {openMenuId === item.id && <div className="entry-menu"><button onClick={() => editEntry(item)}>✎ Edit</button><button className="delete-option" onClick={() => deleteEntry(item)}>🗑 Delete</button></div>}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -271,9 +373,9 @@ function App() {
               <>
                 <div className="welcome-row">
                   <div>
-                    <p className="eyebrow">{isViewScreen ? "A saved memory" : "A little space for you"}</p>
-                    <h2>{isViewScreen ? "Your journal entry 📖" : "How was your day? ✍️"}</h2>
-                    <p>{isViewScreen ? formatDateTime(selectedEntry.createdAt) : `Hi, ${user.email}. Take a moment and write freely.`}</p>
+                    <p className="eyebrow">{isViewScreen ? "A saved memory" : screen === "edit" ? "Edit your memory" : "A little space for you"}</p>
+                    <h2>{isViewScreen ? "Your journal entry 📖" : screen === "edit" ? "Make it yours ✨" : "How was your day? ✍️"}</h2>
+                    <p>{isViewScreen || screen === "edit" ? formatDateTime(selectedEntry.createdAt) : `Hi, ${user.email}. Take a moment and write freely.`}</p>
                   </div>
                   <div className="quote-card">“Small thoughts”<br /><strong>Big changes. ♡</strong></div>
                 </div>
@@ -281,34 +383,44 @@ function App() {
                 <div className="book-area">
                   <div className="book-shell">
                     <div className="book-spine"><span>◦</span><span>◦</span><span>◦</span><span>◦</span><span>◦</span></div>
-                    <div className="book-page" ref={bookRef}>
+                    <div className="book-page" ref={bookRef} onClick={() => setSelectedStickerId(null)}>
                       <div className="book-page-top"><div className="book-title">Dear Journal,</div><div className="today-date">{formatDateTime(displayedDate)}</div></div>
                       <div className="margin-line" />
-                      <textarea value={entry} onChange={(e) => !isViewScreen && setEntry(e.target.value)} readOnly={isViewScreen} placeholder="Write about your day..." />
+                      <textarea value={entry} onChange={(e) => isEditable && setEntry(e.target.value)} readOnly={!isEditable} placeholder="Write about your day..." />
+
                       {pageStickers.map((sticker) => (
-                        <div key={sticker.id} className="placed-sticker" style={{ left: `${sticker.x}%`, top: `${sticker.y}%` }} onPointerDown={(event) => !isViewScreen && startStickerDrag(event, sticker)} onDoubleClick={() => !isViewScreen && removeSticker(sticker.id)} title={isViewScreen ? "Saved sticker" : "Drag me • Double-click to remove"}>{sticker.emoji}</div>
+                        <div key={sticker.id} className={`placed-sticker ${selectedStickerId === sticker.id ? "selected" : ""}`} style={{ left: `${sticker.x}%`, top: `${sticker.y}%`, fontSize: `${sticker.size}px`, transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg)` }} onPointerDown={(event) => startStickerDrag(event, sticker)} onClick={(event) => { event.stopPropagation(); setSelectedStickerId(sticker.id); }}>
+                          {sticker.emoji}
+                          {selectedStickerId === sticker.id && isEditable && (
+                            <div className="sticker-controls" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                              <button onClick={() => resizeSticker(-5)}>−</button><button onClick={() => resizeSticker(5)}>+</button><button onClick={() => rotateSticker(-15)}>↺</button><button onClick={() => rotateSticker(15)}>↻</button><button className="remove-sticker" onClick={removeSelectedSticker}>×</button>
+                            </div>
+                          )}
+                        </div>
                       ))}
                       <div className="book-hint">Your thoughts. Your page. Your little world. ♡</div>
                     </div>
 
-                    {showStickers && !isViewScreen && (
-                      <div className="sticker-panel">
-                        <div className="sticker-panel-title"><div><strong>Stickers</strong><small>Decorate your journal ✨</small></div><button className="close-stickers" onClick={() => setShowStickers(false)}>×</button></div>
-                        <p className="sticker-help">Click a sticker to add it to your page. Then drag it anywhere.</p>
-                        <div className="sticker-grid">{stickers.map((sticker, index) => <button key={`${sticker}-${index}`} className="sticker-choice" onClick={() => addSticker(sticker)}>{sticker}</button>)}</div>
+                    {showStickers && isEditable && (
+                      <div className="sticker-panel" onClick={(e) => e.stopPropagation()}>
+                        <div className="sticker-panel-title"><div><strong>Stickers ✨</strong><small>Make your page yours</small></div><button className="close-stickers" onClick={() => setShowStickers(false)}>×</button></div>
+                        <div className="sticker-tabs">{categories.map((category) => <button key={category} className={stickerCategory === category ? "active" : ""} onClick={() => setStickerCategory(category)}>{category}</button>)}</div>
+                        <div className="sticker-grid">{stickerSets[stickerCategory].map((sticker, index) => <button key={`${sticker}-${index}`} className="sticker-choice" onClick={() => addSticker(sticker)}>{sticker}</button>)}</div>
+                        <p className="sticker-help">Click to add. Drag to move. Select a sticker for resize, rotate and remove.</p>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {isViewScreen ? (
-                  <div className="action-row single-action"><button className="primary-action" onClick={openJournal}>← Back to My Journal</button></div>
+                  <div className="action-row three-actions"><button className="secondary-action" onClick={() => editEntry(selectedEntry)}>✎ Edit Entry</button><button className="primary-action" onClick={openJournal}>← My Journal</button><button className="danger-action" onClick={() => deleteEntry(selectedEntry)}>🗑 Delete</button></div>
                 ) : (
                   <>
-                    <div className="action-row"><button className="secondary-action" onClick={analyzeEntry}>✨ Analyze with AI</button><button className="primary-action" onClick={saveEntry}>💾 Save Journal Entry</button></div>
+                    <div className="action-row"><button className="secondary-action" onClick={analyzeEntry}>✨ Analyze with AI</button><button className="primary-action" onClick={saveEntry}>{screen === "edit" ? "💾 Save Changes" : "💾 Save Entry"}</button></div>
+                    {screen === "edit" && <button className="cancel-edit" onClick={() => viewEntry(selectedEntry)}>Cancel editing</button>}
                     {loading && <p className="message">🤖 Gemini is thinking...</p>}
                     {message && <p className="message">{message}</p>}
-                    {analysis && <div className="analysis"><h3>🤖 AI Analysis</h3>{(() => { const result = formatAnalysis(analysis); return <>{result.mood && <div className="analysis-section"><h4>😊 Mood</h4><p>{result.mood}</p></div>}{result.summary && <div className="analysis-section"><h4>📝 Summary</h4><p>{result.summary}</p></div>}{result.topics && <div className="analysis-section"><h4>📌 Main Topics</h4><p>{result.topics}</p></div>}{result.suggestion && <div className="analysis-section"><h4>💡 Helpful Suggestion</h4><p>{result.suggestion}</p></div>}</>; })()}</div>}
+                    {analysis && <div className="analysis"><h3>🤖 AI Analysis</h3>{(() => { const result = formatAnalysis(analysis); return <><div className="analysis-section"><h4>😊 Mood</h4><p>{result.mood}</p></div><div className="analysis-section"><h4>📝 Summary</h4><p>{result.summary}</p></div><div className="analysis-section"><h4>📌 Main Topics</h4><p>{result.topics}</p></div><div className="analysis-section"><h4>💡 Helpful Suggestion</h4><p>{result.suggestion}</p></div></>; })()}</div>}
                   </>
                 )}
               </>

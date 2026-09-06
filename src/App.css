@@ -47,8 +47,8 @@ button { cursor: pointer; }
 .book-hint { position:absolute; z-index:3; right:34px; bottom:20px; color:#a08ead; font:italic 13px Georgia,serif; }
 .placed-sticker { position:absolute; z-index:10; user-select:none; touch-action:none; cursor:grab; line-height:1; filter:drop-shadow(1px 3px 3px rgba(70,50,90,.2)); }
 .placed-sticker.selected { z-index:18; filter:drop-shadow(0 0 0 #7655d3) drop-shadow(0 3px 5px rgba(70,50,90,.22)); }
-.sticker-controls { position:absolute; left:50%; top:-46px; transform:translateX(-50%); display:flex; gap:4px; padding:5px; border:1px solid #d6c7f5; border-radius:12px; background:#fff; box-shadow:0 8px 20px rgba(60,40,110,.18); white-space:nowrap; }
-.sticker-controls button { width:30px; height:28px; padding:0; margin:0; border:0; border-radius:7px; background:#eee6ff; color:#503a87; font-weight:700; }
+.sticker-controls{position:absolute;left:50%;top:-46px;transform:translateX(-50%) !important;transform-origin:center;display:flex;gap:4px;padding:5px;border:1px solid #d6c7f5;border-radius:12px;background:#fff;box-shadow:0 8px 20px rgba(60,40,110,.18);white-space:nowrap;font-size:16px !important;line-height:1 !important;z-index:50}
+.sticker-controls button{width:30px !important;min-width:30px !important;max-width:30px !important;height:28px !important;min-height:28px !important;max-height:28px !important;padding:0 !important;margin:0 !important;border:0;border-radius:7px;background:#eee6ff;color:#503a87;font-size:16px !important;line-height:28px !important;font-weight:700;transform:none !important}
 .sticker-controls button:hover { background:#d9c9ff; }
 .sticker-controls .remove-sticker { background:#ffe0e5; color:#b33b54; }
 

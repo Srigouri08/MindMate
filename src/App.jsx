@@ -326,7 +326,7 @@ function App() {
       {!user ? (
         <div className="login-layout">
           <div className="login-card">
-            <div className="login-heart"><span>🧠</span>♡</div>
+            <div className="login-heart">♡</div>
             <h2>{isLogin ? "Welcome Back" : "Create Your Journal"}</h2>
             <p className="login-subtitle">{isLogin ? "A quiet little place for your thoughts." : "Your thoughts deserve a safe place."}</p>
             <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} />

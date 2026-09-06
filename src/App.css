@@ -110,8 +110,21 @@ button { cursor: pointer; }
 
 .login-layout { min-height:calc(100vh - 105px); display:grid; place-items:center; padding:35px 20px; }
 .login-card { width:min(440px,100%); padding:38px; border:1px solid #ddd2f1; border-radius:26px; background:rgba(255,255,255,.86); box-shadow:0 20px 60px rgba(72,49,130,.14); text-align:center; }
-.login-heart { width:70px; height:70px; margin:0 auto 16px; display:grid; place-items:center; position:relative; border-radius:21px; background:#eee4ff; color:#6747ba; font-size:35px; }
-.login-heart span { font-size:27px; }
+.login-heart {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 20px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: rgba(118, 85, 211, 0.12);
+  border: 1px solid rgba(118, 85, 211, 0.28);
+  color: #7655d3;
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1;
+  box-shadow: 0 8px 22px rgba(80, 55, 140, 0.10);
+}.login-heart span { font-size:27px; }
 .login-heart { text-shadow:10px 12px 0 #7958cf; }
 .login-card h2 { margin:0; font-size:28px; color:#382a63; }
 .login-subtitle { color:#827697; margin:8px 0 25px; }

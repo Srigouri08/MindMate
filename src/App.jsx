@@ -158,10 +158,13 @@ function App() {
 
   // Format Gemini response
 function formatAnalysis(text) {
+  // Remove all Markdown formatting and escaped Markdown characters
   const cleanText = text
+    .replace(/\\\*/g, "")
     .replace(/\*\*/g, "")
-    .replace(/^\s*\*\s+/gm, "•")
-    .replace(/^\s*-\s+/gm, "•")
+    .replace(/\*/g, "")
+    .replace(/#{1,6}\s*/g, "")
+    .replace(/^\s*[-•]\s*/gm, "•")
     .trim();
 
   const sections = {

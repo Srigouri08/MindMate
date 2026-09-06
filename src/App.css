@@ -125,7 +125,7 @@ button { cursor: pointer; }
   line-height: 1;
   box-shadow: 0 8px 22px rgba(80, 55, 140, 0.10);
 }.login-heart span { font-size:27px; }
-.login-heart { text-shadow:10px 12px 0 #7958cf; }
+
 .login-card h2 { margin:0; font-size:28px; color:#382a63; }
 .login-subtitle { color:#827697; margin:8px 0 25px; }
 .login-card input { width:100%; padding:14px; margin:7px 0; border:1px solid #ddd3ef; border-radius:12px; background:#fff; color:#392d55; outline:0; }

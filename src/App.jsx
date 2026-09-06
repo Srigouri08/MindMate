@@ -157,48 +157,45 @@ function App() {
   }
 
   // Format Gemini response
-  function formatAnalysis(text) {
-    const sections = {
-      mood: "",
-      summary: "",
-      topics: "",
-      suggestion: "",
-    };
+function formatAnalysis(text) {
+  const cleanText = text
+    .replace(/\*\*/g, "")
+    .replace(/^\s*\*\s+/gm, "•")
+    .replace(/^\s*-\s+/gm, "•")
+    .trim();
 
-    const moodMatch = text.match(
-      /Mood:\s*([\s\S]*?)(?=Summary:|Main topics:|Helpful suggestion:|$)/i
-    );
+  const sections = {
+    mood: "",
+    summary: "",
+    topics: "",
+    suggestion: "",
+  };
 
-    const summaryMatch = text.match(
-      /Summary:\s*([\s\S]*?)(?=Main topics:|Helpful suggestion:|$)/i
-    );
+  const moodMatch = cleanText.match(
+    /Mood:\s*([\s\S]*?)(?=Summary:|Main topics:|Helpful suggestion:|$)/i
+  );
 
-    const topicsMatch = text.match(
-      /Main topics:\s*([\s\S]*?)(?=Helpful suggestion:|$)/i
-    );
+  const summaryMatch = cleanText.match(
+    /Summary:\s*([\s\S]*?)(?=Main topics:|Helpful suggestion:|$)/i
+  );
 
-    const suggestionMatch = text.match(
-      /Helpful suggestion:\s*([\s\S]*?)$/i
-    );
+  const topicsMatch = cleanText.match(
+    /Main topics:\s*([\s\S]*?)(?=Helpful suggestion:|$)/i
+  );
 
-    sections.mood = moodMatch
-      ? moodMatch[1].trim()
-      : "";
+  const suggestionMatch = cleanText.match(
+    /Helpful suggestion:\s*([\s\S]*?)$/i
+  );
 
-    sections.summary = summaryMatch
-      ? summaryMatch[1].trim()
-      : "";
+  sections.mood = moodMatch ? moodMatch[1].trim() : "";
+  sections.summary = summaryMatch ? summaryMatch[1].trim() : "";
+  sections.topics = topicsMatch ? topicsMatch[1].trim() : "";
+  sections.suggestion = suggestionMatch
+    ? suggestionMatch[1].trim()
+    : "";
 
-    sections.topics = topicsMatch
-      ? topicsMatch[1].trim()
-      : "";
-
-    sections.suggestion = suggestionMatch
-      ? suggestionMatch[1].trim()
-      : "";
-
-    return sections;
-  }
+  return sections;
+}
 
   if (!user) {
     return (

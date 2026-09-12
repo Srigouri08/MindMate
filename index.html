@@ -6,101 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MindMate</title>
     <style>
-      .brand-icon span,
-      .login-heart span { display: none !important; }
-      .brand-icon b { position: static !important; font-size: 34px !important; line-height: 1 !important; color: #7655d3 !important; }
-      .login-heart { color: #7655d3 !important; font-size: 34px !important; }
-      .mm-photo-tool { position: fixed; right: 28px; bottom: 28px; z-index: 9998; border: 0; border-radius: 16px; padding: 13px 17px; background: linear-gradient(135deg,#7655d3,#6342bf); color: white; font-weight: 700; box-shadow: 0 10px 28px rgba(80,55,145,.28); cursor: pointer; }
-      .mm-photo-panel { position: fixed; right: 28px; bottom: 82px; width: 310px; z-index: 9999; padding: 18px; border: 1px solid #d8caf6; border-radius: 20px; background: #fff; box-shadow: 0 18px 45px rgba(58,39,115,.25); font-family: Arial,sans-serif; color:#403368; }
-      .mm-photo-panel h3 { margin:0 0 5px; }.mm-photo-panel p { margin:0 0 14px; color:#827697; font-size:12px; }.mm-frame-row { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }.mm-frame { padding:9px 5px; border:1px solid #ddd3f1; border-radius:10px; background:#faf8ff; color:#584583; cursor:pointer; font-size:11px; }.mm-frame.active { background:#e7dcff; border-color:#7655d3; font-weight:700; }.mm-close { float:right; border:0; background:transparent; font-size:20px; cursor:pointer; color:#75698b; }
-      .mm-photo { position:absolute; z-index:24; width:150px; padding:8px 8px 25px; background:#fff; box-shadow:0 10px 22px rgba(55,40,85,.2); cursor:grab; user-select:none; transform:rotate(-2deg); }.mm-photo img { display:block; width:100%; height:115px; object-fit:cover; pointer-events:none; }.mm-photo.polaroid { padding-bottom:32px; }.mm-photo.rounded { border-radius:16px; overflow:hidden; padding:5px 5px 10px; }.mm-photo.rounded img { border-radius:12px; }.mm-photo.film { background:#292334; padding:7px; border:5px solid #292334; }.mm-photo.film img { height:105px; }.mm-photo.tape { transform:rotate(2deg); }.mm-photo.tape:before { content:""; position:absolute; top:-9px; left:42px; width:65px; height:18px; background:rgba(247,220,168,.75); transform:rotate(-2deg); }.mm-photo.heart { border-radius:20px; padding:5px; }.mm-photo.heart img { border-radius:16px; }.mm-memory-overlay { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; background:rgba(35,25,55,.7); padding:25px; }.mm-memory { width:min(760px,95vw); max-height:90vh; overflow:auto; border-radius:24px; background:#fffaf4; padding:25px; box-shadow:0 25px 70px rgba(20,10,45,.4); text-align:center; }.mm-memory h2 { margin:0 0 5px; color:#493875; }.mm-memory-sub { color:#85789a; margin:0 0 18px; }.mm-slide { min-height:390px; display:grid; place-items:center; background:linear-gradient(135deg,#f4edff,#fff6f0); border-radius:18px; padding:20px; }.mm-slide img { max-width:90%; max-height:430px; border:10px solid white; box-shadow:0 12px 28px rgba(60,40,90,.2); }.mm-memory-controls { display:flex; justify-content:center; gap:10px; margin-top:15px; }.mm-memory-controls button { border:0; border-radius:12px; padding:10px 16px; background:#e8ddff; color:#503b80; font-weight:700; cursor:pointer; }.mm-memory-controls .close { background:#7655d3; color:#fff; }
+      .brand-icon span,.login-heart span{display:none!important}.brand-icon b{position:static!important;font-size:34px!important;line-height:1!important;color:#7655d3!important}.login-heart{color:#7655d3!important;font-size:34px!important}
+      .mm-photo-tool{position:fixed;right:28px;bottom:28px;z-index:9998;border:0;border-radius:16px;padding:13px 17px;background:linear-gradient(135deg,#7655d3,#6342bf);color:#fff;font-weight:700;box-shadow:0 10px 28px rgba(80,55,145,.28);cursor:pointer}
+      .mm-photo-panel{position:fixed;right:28px;bottom:82px;width:310px;z-index:9999;padding:18px;border:1px solid #d8caf6;border-radius:20px;background:#fff;box-shadow:0 18px 45px rgba(58,39,115,.25);font-family:Arial,sans-serif;color:#403368}.mm-photo-panel h3{margin:0 0 5px}.mm-photo-panel p{margin:0 0 14px;color:#827697;font-size:12px}.mm-frame-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.mm-frame{padding:9px 5px;border:1px solid #ddd3f1;border-radius:10px;background:#faf8ff;color:#584583;cursor:pointer;font-size:11px}.mm-frame.active{background:#e7dcff;border-color:#7655d3;font-weight:700}.mm-close{float:right;border:0;background:transparent;font-size:20px;cursor:pointer;color:#75698b}
+      .mm-photo{position:absolute;z-index:24;width:150px;padding:8px 8px 25px;background:#fff;box-shadow:0 10px 22px rgba(55,40,85,.2);cursor:grab;user-select:none;transform:rotate(-2deg)}.mm-photo img{display:block;width:100%;height:115px;object-fit:cover;pointer-events:none}.mm-photo.polaroid{padding-bottom:32px}.mm-photo.rounded{border-radius:16px;overflow:hidden;padding:5px 5px 10px}.mm-photo.rounded img{border-radius:12px}.mm-photo.film{background:#292334;padding:7px;border:5px solid #292334}.mm-photo.film img{height:105px}.mm-photo.tape{transform:rotate(2deg)}.mm-photo.tape:before{content:"";position:absolute;top:-9px;left:42px;width:65px;height:18px;background:rgba(247,220,168,.75);transform:rotate(-2deg)}.mm-photo.heart{border-radius:20px;padding:5px}.mm-photo.heart img{border-radius:16px}
+      .mm-memory-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:rgba(35,25,55,.7);padding:25px}.mm-memory{width:min(760px,95vw);max-height:90vh;overflow:auto;border-radius:24px;background:#fffaf4;padding:25px;box-shadow:0 25px 70px rgba(20,10,45,.4);text-align:center}.mm-memory h2{margin:0 0 5px;color:#493875}.mm-memory-sub{color:#85789a;margin:0 0 18px}.mm-slide{min-height:390px;display:grid;place-items:center;background:linear-gradient(135deg,#f4edff,#fff6f0);border-radius:18px;padding:20px}.mm-slide img{max-width:90%;max-height:430px;border:10px solid #fff;box-shadow:0 12px 28px rgba(60,40,90,.2)}.mm-memory-controls{display:flex;justify-content:center;gap:10px;margin-top:15px}.mm-memory-controls button{border:0;border-radius:12px;padding:10px 16px;background:#e8ddff;color:#503b80;font-weight:700;cursor:pointer}.mm-memory-controls .close{background:#7655d3;color:#fff}
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script>
-      document.addEventListener("click", function (event) {
-        const brand = event.target.closest(".brand");
-        if (!brand) return;
-        const buttons = Array.from(document.querySelectorAll("button"));
-        const newJournal = buttons.find((button) => button.textContent.trim().toLowerCase().includes("new journal"));
-        if (newJournal) newJournal.click();
-      });
-
-      (() => {
-        const key = "mindmate-little-moments";
-        let photos = JSON.parse(localStorage.getItem(key) || "[]");
-        let frame = "polaroid";
-        let panel = null;
-        let memoryIndex = 0;
-        let memoryTimer = null;
-
-        const save = () => localStorage.setItem(key, JSON.stringify(photos));
-        const monthName = (d = new Date()) => d.toLocaleString("en-IN", { month:"long", year:"numeric" });
-
-        function ensureTool() {
-          if (document.querySelector(".mm-photo-tool")) return;
-          const sidebar = document.querySelector(".sidebar");
-          if (!sidebar) return;
-          const moments = Array.from(sidebar.querySelectorAll("button")).find(b => b.textContent.toLowerCase().includes("little moments"));
-          if (moments) moments.addEventListener("click", openMemory);
-          const tool = document.createElement("button");
-          tool.className = "mm-photo-tool"; tool.textContent = "📸 Add Photo"; tool.onclick = openPhotoPanel;
-          document.body.appendChild(tool);
+      document.addEventListener("click",function(event){const brand=event.target.closest(".brand");if(!brand)return;const b=Array.from(document.querySelectorAll("button")).find(x=>x.textContent.trim().toLowerCase().includes("new journal"));if(b)b.click()});
+      (()=>{
+        const key="mindmate-little-moments";let photos=JSON.parse(localStorage.getItem(key)||"[]"),frame="polaroid",panel=null,memoryIndex=0,memoryTimer=null,sidebarHooked=false;
+        const save=()=>localStorage.setItem(key,JSON.stringify(photos));
+        const monthName=(d=new Date())=>d.toLocaleString("en-IN",{month:"long",year:"numeric"});
+        function ensureTool(){
+          let tool=document.querySelector(".mm-photo-tool");
+          if(!tool){tool=document.createElement("button");tool.className="mm-photo-tool";tool.textContent="📸 Add Photo";tool.onclick=openPhotoPanel;document.body.appendChild(tool)}
+          if(!sidebarHooked){const sidebar=document.querySelector(".sidebar");if(sidebar){const moments=Array.from(sidebar.querySelectorAll("button")).find(b=>b.textContent.toLowerCase().includes("little moments"));if(moments){moments.addEventListener("click",openMemory);sidebarHooked=true}}}
         }
-
-        function openPhotoPanel() {
-          if (panel) { panel.remove(); panel=null; return; }
-          panel=document.createElement("div"); panel.className="mm-photo-panel";
-          panel.innerHTML=`<button class="mm-close">×</button><h3>📸 Add a Little Moment</h3><p>Pick a photo and give it a cute frame.</p><div class="mm-frame-row"><button class="mm-frame active" data-f="polaroid">Polaroid</button><button class="mm-frame" data-f="rounded">Rounded</button><button class="mm-frame" data-f="film">Film</button><button class="mm-frame" data-f="tape">Tape</button><button class="mm-frame" data-f="heart">Heart</button></div><input id="mm-photo-input" type="file" accept="image/*" multiple style="display:none"><button id="mm-choose" style="margin-top:14px;width:100%;padding:11px;border:0;border-radius:12px;background:#7655d3;color:white;font-weight:700;cursor:pointer">Choose Photo(s)</button>`;
-          document.body.appendChild(panel);
-          panel.querySelector(".mm-close").onclick=()=>{panel.remove();panel=null};
-          panel.querySelectorAll(".mm-frame").forEach(b=>b.onclick=()=>{frame=b.dataset.f;panel.querySelectorAll(".mm-frame").forEach(x=>x.classList.remove("active"));b.classList.add("active")});
-          panel.querySelector("#mm-choose").onclick=()=>panel.querySelector("#mm-photo-input").click();
-          panel.querySelector("#mm-photo-input").onchange=e=>{Array.from(e.target.files).forEach(addPhoto); if(panel){panel.remove();panel=null}};
-        }
-
-        function addPhoto(file) {
-          const reader=new FileReader();
-          reader.onload=()=>{
-            const item={id:Date.now()+Math.random(),src:reader.result,frame,month:monthName(),x:15+(photos.length%4)*18,y:18+(photos.length%3)*18,createdAt:Date.now()};
-            photos.push(item);save();renderPhoto(item);
-          }; reader.readAsDataURL(file);
-        }
-
-        function renderPhoto(item) {
-          const book=document.querySelector(".book-page"); if(!book) return;
-          const old=book.querySelector(`[data-mm-id="${item.id}"]`); if(old) old.remove();
-          const wrap=document.createElement("div"); wrap.className=`mm-photo ${item.frame}`; wrap.dataset.mmId=item.id; wrap.style.left=item.x+"%"; wrap.style.top=item.y+"%";
-          wrap.innerHTML=`<img src="${item.src}" alt="Little moment"><span style="position:absolute;right:4px;bottom:3px;font-size:10px;color:#8b7c91">double-click to remove</span>`;
-          let drag=null;
-          wrap.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,l:parseFloat(wrap.style.left),t:parseFloat(wrap.style.top)};wrap.setPointerCapture?.(e.pointerId);e.stopPropagation()};
-          wrap.onpointermove=e=>{if(!drag)return;const r=book.getBoundingClientRect();wrap.style.left=Math.max(2,Math.min(82,drag.l+(e.clientX-drag.x)/r.width*100))+"%";wrap.style.top=Math.max(4,Math.min(78,drag.t+(e.clientY-drag.y)/r.height*100))+"%"};
-          wrap.onpointerup=()=>{if(drag){item.x=parseFloat(wrap.style.left);item.y=parseFloat(wrap.style.top);save();drag=null}};
-          wrap.ondblclick=()=>{photos=photos.filter(p=>p.id!==item.id);save();wrap.remove()};
-          book.appendChild(wrap);
-        }
-
-        function renderCurrentPhotos() { photos.forEach(renderPhoto); }
-
-        function openMemory() {
-          const month=monthName(); const list=photos.filter(p=>p.month===month);
-          const overlay=document.createElement("div"); overlay.className="mm-memory-overlay";
-          overlay.innerHTML=`<div class="mm-memory"><h2>✨ ${month} Little Moments</h2><p class="mm-memory-sub">${list.length ? list.length+" photos from your month" : "Add a few photos to create your first memory."}</p><div class="mm-slide"></div><div class="mm-memory-controls"><button class="prev">‹</button><button class="play">▶ Play Slideshow</button><button class="next">›</button><button class="close">Close</button></div></div>`;
-          document.body.appendChild(overlay);
-          const slide=overlay.querySelector(".mm-slide"), play=overlay.querySelector(".play");
-          const show=()=>{if(!list.length){slide.innerHTML="<div style='font-size:60px'>📸</div>";return} const p=list[memoryIndex%list.length];slide.innerHTML=`<img src="${p.src}" alt="Memory" class="${p.frame}">`;};
-          const next=()=>{if(list.length){memoryIndex=(memoryIndex+1)%list.length;show()}};
-          const prev=()=>{if(list.length){memoryIndex=(memoryIndex-1+list.length)%list.length;show()}};
-          overlay.querySelector(".next").onclick=next; overlay.querySelector(".prev").onclick=prev;
-          play.onclick=()=>{if(!list.length)return;if(memoryTimer){clearInterval(memoryTimer);memoryTimer=null;play.textContent="▶ Play Slideshow"}else{play.textContent="⏸ Pause Slideshow";memoryTimer=setInterval(next,2500)}};
-          overlay.querySelector(".close").onclick=()=>{clearInterval(memoryTimer);memoryTimer=null;overlay.remove()};
-          memoryIndex=0;show();
-        }
-
-        const observer=new MutationObserver(()=>{ensureTool();renderCurrentPhotos()});
-        observer.observe(document.body,{childList:true,subtree:true});
-        setTimeout(ensureTool,700);
+        function openPhotoPanel(){if(panel){panel.remove();panel=null;return}panel=document.createElement("div");panel.className="mm-photo-panel";panel.innerHTML='<button class="mm-close">×</button><h3>📸 Add a Little Moment</h3><p>Pick a photo and give it a cute frame.</p><div class="mm-frame-row"><button class="mm-frame active" data-f="polaroid">Polaroid</button><button class="mm-frame" data-f="rounded">Rounded</button><button class="mm-frame" data-f="film">Film</button><button class="mm-frame" data-f="tape">Tape</button><button class="mm-frame" data-f="heart">Heart</button></div><input id="mm-photo-input" type="file" accept="image/*" multiple style="display:none"><button id="mm-choose" style="margin-top:14px;width:100%;padding:11px;border:0;border-radius:12px;background:#7655d3;color:#fff;font-weight:700;cursor:pointer">Choose Photo(s)</button>';document.body.appendChild(panel);panel.querySelector(".mm-close").onclick=()=>{panel.remove();panel=null};panel.querySelectorAll(".mm-frame").forEach(b=>b.onclick=()=>{frame=b.dataset.f;panel.querySelectorAll(".mm-frame").forEach(x=>x.classList.remove("active"));b.classList.add("active")});panel.querySelector("#mm-choose").onclick=()=>panel.querySelector("#mm-photo-input").click();panel.querySelector("#mm-photo-input").onchange=e=>{Array.from(e.target.files).forEach(addPhoto);panel.remove();panel=null}}
+        function addPhoto(file){const reader=new FileReader();reader.onload=()=>{const item={id:Date.now()+Math.random(),src:reader.result,frame,month:monthName(),x:15+(photos.length%4)*18,y:18+(photos.length%3)*18,createdAt:Date.now()};photos.push(item);save();renderPhoto(item)};reader.readAsDataURL(file)}
+        function renderPhoto(item){const book=document.querySelector(".book-page");if(!book)return;if(book.querySelector(`[data-mm-id="${item.id}"]`))return;const wrap=document.createElement("div");wrap.className=`mm-photo ${item.frame}`;wrap.dataset.mmId=item.id;wrap.style.left=item.x+"%";wrap.style.top=item.y+"%";wrap.innerHTML=`<img src="${item.src}" alt="Little moment"><span style="position:absolute;right:4px;bottom:3px;font-size:10px;color:#8b7c91">double-click to remove</span>`;let drag=null;wrap.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,l:parseFloat(wrap.style.left),t:parseFloat(wrap.style.top)};wrap.setPointerCapture?.(e.pointerId);e.stopPropagation()};wrap.onpointermove=e=>{if(!drag)return;const r=book.getBoundingClientRect();wrap.style.left=Math.max(2,Math.min(82,drag.l+(e.clientX-drag.x)/r.width*100))+"%";wrap.style.top=Math.max(4,Math.min(78,drag.t+(e.clientY-drag.y)/r.height*100))+"%"};wrap.onpointerup=()=>{if(drag){item.x=parseFloat(wrap.style.left);item.y=parseFloat(wrap.style.top);save();drag=null}};wrap.ondblclick=()=>{photos=photos.filter(p=>p.id!==item.id);save();wrap.remove()};book.appendChild(wrap)}
+        function renderCurrentPhotos(){photos.forEach(renderPhoto)}
+        function openMemory(){const month=monthName(),list=photos.filter(p=>p.month===month),overlay=document.createElement("div");overlay.className="mm-memory-overlay";overlay.innerHTML=`<div class="mm-memory"><h2>✨ ${month} Little Moments</h2><p class="mm-memory-sub">${list.length?list.length+" photos from your month":"Add a few photos to create your first memory."}</p><div class="mm-slide"></div><div class="mm-memory-controls"><button class="prev">‹</button><button class="play">▶ Play Slideshow</button><button class="next">›</button><button class="close">Close</button></div></div>`;document.body.appendChild(overlay);const slide=overlay.querySelector(".mm-slide"),play=overlay.querySelector(".play"),show=()=>{if(!list.length){slide.innerHTML="<div style='font-size:60px'>📸</div>";return}const p=list[memoryIndex%list.length];slide.innerHTML=`<img src="${p.src}" alt="Memory">`},next=()=>{if(list.length){memoryIndex=(memoryIndex+1)%list.length;show()}},prev=()=>{if(list.length){memoryIndex=(memoryIndex-1+list.length)%list.length;show()}};overlay.querySelector(".next").onclick=next;overlay.querySelector(".prev").onclick=prev;play.onclick=()=>{if(!list.length)return;if(memoryTimer){clearInterval(memoryTimer);memoryTimer=null;play.textContent="▶ Play Slideshow"}else{play.textContent="⏸ Pause Slideshow";memoryTimer=setInterval(next,2500)}};overlay.querySelector(".close").onclick=()=>{clearInterval(memoryTimer);memoryTimer=null;overlay.remove()};memoryIndex=0;show()}
+        setInterval(()=>{ensureTool();renderCurrentPhotos()},1000);setTimeout(()=>{ensureTool();renderCurrentPhotos()},500);
       })();
     </script>
     <script type="module" src="/src/main.jsx"></script>

@@ -14,6 +14,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      document.addEventListener("click", function (event) {
+        const brand = event.target.closest(".brand");
+        if (!brand) return;
+        const buttons = Array.from(document.querySelectorAll("button"));
+        const newJournal = buttons.find((button) => button.textContent.trim().toLowerCase().includes("new journal"));
+        if (newJournal) newJournal.click();
+      });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

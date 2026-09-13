@@ -3,209 +3,213 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 const API = "https://mindmate-kuqp.onrender.com";
-const MOODS = { great:"😄", good:"😌", okay:"😐", low:"😔", rough:"😣" };
-const LABELS = { great:"Great", good:"Good", okay:"Okay", low:"Low", rough:"Rough" };
+const MOODS = {
+  great: { emoji: "😄", label: "Great" },
+  good: { emoji: "😌", label: "Good" },
+  okay: { emoji: "😐", label: "Okay" },
+  low: { emoji: "😔", label: "Low" },
+  rough: { emoji: "😣", label: "Rough" },
+};
 
-const css = document.createElement("style");
-css.textContent = `
-.mm-insights-btn{width:100%;margin:8px 0;padding:14px 17px;border:0;border-radius:14px;background:#e6dcff;color:#443477;text-align:left;font-size:15px;font-weight:700;cursor:pointer}.mm-insights-btn:hover{background:#d9c9ff}
-.mm-i-overlay{position:fixed;inset:0;z-index:10030;background:rgba(25,18,42,.62);display:grid;place-items:center;padding:20px}.mm-i-modal{width:min(900px,96vw);max-height:88vh;overflow:auto;padding:24px;border-radius:24px;background:#fffafc;box-shadow:0 25px 70px rgba(20,10,45,.4);color:#403267;font-family:Arial,sans-serif}.mm-i-head{display:flex;justify-content:space-between}.mm-i-head h2{margin:0 0 5px}.mm-i-head p{margin:0;color:#887b9d;font-size:13px}.mm-i-close{border:0;background:none;font-size:26px;color:#756986;cursor:pointer}.mm-i-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 16px}.mm-i-tab{border:1px solid #ddd2f1;border-radius:12px;padding:9px 14px;background:#fff;color:#5c4787;font-weight:700;cursor:pointer}.mm-i-tab.active{background:#7655d3;color:#fff}.mm-i-card{padding:18px;border:1px solid #e0d6f0;border-radius:18px;background:#fff}.mm-i-card h3{margin-top:0}.mm-i-input{width:100%;box-sizing:border-box;min-height:90px;padding:13px;border:1px solid #d9cfee;border-radius:13px;resize:vertical;outline:none}.mm-i-primary{margin-top:10px;padding:11px 16px;border:0;border-radius:12px;background:#7655d3;color:#fff;font-weight:700;cursor:pointer}.mm-i-answer{margin-top:15px;padding:15px;border-radius:14px;background:#f3edff;color:#55476f;line-height:1.6;white-space:pre-wrap}.mm-i-suggest{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.mm-i-suggest button{border:1px solid #ddd2f1;background:#faf8ff;color:#624d8c;border-radius:999px;padding:7px 10px;cursor:pointer;font-size:12px}
-.mm-cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.mm-cal-head button{border:0;background:#eee7ff;border-radius:9px;padding:7px 11px;color:#594582;font-weight:700;cursor:pointer}.mm-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.mm-cal-name{text-align:center;font-size:11px;color:#9589a7;padding:4px}.mm-day{min-height:65px;border:1px solid #e5ddf0;border-radius:10px;padding:6px;background:#fff}.mm-day.empty{background:#faf8fc}.mm-day.today{border-color:#8c6bda;box-shadow:inset 0 0 0 1px #8c6bda}.mm-day-num{font-size:11px;color:#887b9d}.mm-day-mood{display:block;text-align:center;font-size:24px;margin-top:5px}.mm-day-count{font-size:9px;color:#8b7d9d;text-align:center}.mm-growth-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}.mm-stat{padding:15px;border-radius:15px;background:#f5f0ff}.mm-stat strong{display:block;font-size:23px;color:#5a4194}.mm-stat span{font-size:11px;color:#887b9d}.mm-bars{height:220px;display:flex;align-items:flex-end;gap:10px;padding:10px;border-bottom:1px solid #ddd4eb}.mm-bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px}.mm-bar{width:min(42px,70%);min-height:6px;border-radius:9px 9px 2px 2px;background:linear-gradient(to top,#7655d3,#bba2ef)}.mm-bar-label{font-size:10px;color:#887b9d}.mm-note{margin-top:14px;padding:13px;border-radius:13px;background:#fff5e8;color:#735c43;font-size:13px;line-height:1.5}.dark-mode .mm-i-modal{background:#241f32;color:#eee7ff}.dark-mode .mm-i-card,.dark-mode .mm-day{background:#2d273c;border-color:#4b4262}.dark-mode .mm-i-input{background:#302a40;color:#eee7ff;border-color:#514668}.dark-mode .mm-i-answer{background:#38304b;color:#e9e0ff}.dark-mode .mm-i-tab{background:#302a40;color:#ddd1f4;border-color:#514668}.dark-mode .mm-i-tab.active{background:#7655d3;color:#fff}.dark-mode .mm-stat{background:#38304b}
-@media(max-width:650px){.mm-i-modal{padding:17px}.mm-growth-stats{grid-template-columns:1fr}.mm-day{min-height:55px}}
-`;
-document.head.appendChild(css);
-
-let user = null;
+let currentUser = null;
 let entries = [];
-let modal = null;
-let tab = "ask";
-let calDate = new Date();
+let activePanel = null;
 
-const dOf = (x) => x?.createdAt?.toDate ? x.createdAt.toDate() : new Date(x?.createdAt || 0);
-const key = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const dateText = (d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+const style = document.createElement("style");
+style.textContent = `
+  .mm-feature-modal{position:fixed;inset:0;z-index:12000;background:rgba(35,24,60,.28);backdrop-filter:blur(5px);display:grid;place-items:center;padding:22px}
+  .mm-feature-card{width:min(760px,100%);max-height:86vh;overflow:auto;background:#fff;border:1px solid #ddd1f3;border-radius:24px;box-shadow:0 24px 70px rgba(45,30,85,.25);padding:26px;color:#403361;font-family:Arial,sans-serif}
+  .mm-feature-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}.mm-feature-head h2{margin:0 0 5px;font-size:25px;color:#38266f}.mm-feature-head p{margin:0;color:#857999;font-size:13px}.mm-feature-close{width:36px;height:36px;border:1px solid #ddd2ef;border-radius:10px;background:#f8f5ff;color:#65557e;font-size:23px}
+  .mm-feature-input{width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid #d9cfee;border-radius:12px;outline:0;background:#fcfbff;color:#433663}.mm-feature-input:focus{border-color:#9476d2;box-shadow:0 0 0 3px #eee7ff}
+  .mm-feature-primary{border:0;border-radius:12px;padding:12px 17px;background:#7653d7;color:#fff;font-weight:700;cursor:pointer}.mm-feature-primary:hover{background:#6845c7}.mm-feature-secondary{border:1px solid #d9cfee;border-radius:12px;padding:11px 15px;background:#f3edff;color:#57417f;font-weight:700;cursor:pointer}
+  .mm-feature-answer{margin-top:16px;padding:17px;border:1px solid #e2d9f1;border-radius:16px;background:#faf8ff;line-height:1.65;color:#594c70;white-space:pre-wrap}.mm-feature-empty{padding:25px;border:1px dashed #d4c7e8;border-radius:16px;text-align:center;color:#8a7e9c;background:#fcfaff}
+  .mm-mood-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin:16px 0}.mm-day{min-height:74px;border:1px solid #e2d9f1;border-radius:12px;padding:7px;background:#fff}.mm-day-num{font-size:11px;color:#9185a0}.mm-day-mood{font-size:24px;margin-top:8px}.mm-day-count{font-size:9px;color:#9589a4;margin-top:2px}.mm-calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.mm-calendar-head strong{font-size:17px}.mm-calendar-head button{width:34px;height:34px;border:1px solid #ddd2ef;border-radius:9px;background:#f5f0ff;color:#5b4780}
+  .mm-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}.mm-stat{padding:17px;border:1px solid #e1d7f0;border-radius:16px;background:#faf8ff}.mm-stat strong{display:block;font-size:24px;color:#6045a0}.mm-stat span{font-size:11px;color:#877a98}.mm-bar-row{display:grid;grid-template-columns:95px 1fr 35px;align-items:center;gap:9px;margin:10px 0;font-size:12px}.mm-bar{height:9px;border-radius:99px;background:#eee7f8;overflow:hidden}.mm-bar i{display:block;height:100%;background:#8b6bd0;border-radius:99px}
+  .mm-result{padding:15px;border:1px solid #e2d9f1;border-radius:15px;background:#fff;margin-top:10px;cursor:pointer}.mm-result strong{display:block;color:#49376f}.mm-result span{display:block;margin-top:5px;color:#817593;font-size:12px;line-height:1.45}.mm-prompt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.mm-prompt{min-height:105px;text-align:left;border:1px solid #e0d5f0;border-radius:16px;background:#faf8ff;padding:16px;color:#59467d;font-weight:600;cursor:pointer}.mm-prompt:hover{background:#f1eaff;border-color:#b49bdd;transform:translateY(-1px)}
+  .dark-mode .mm-feature-card{background:#2d273d;border-color:#514667;color:#eee8ff}.dark-mode .mm-feature-head h2{color:#eee8ff}.dark-mode .mm-feature-head p,.dark-mode .mm-feature-empty,.dark-mode .mm-result span{color:#b9aecb}.dark-mode .mm-feature-input{background:#252031;color:#eee8ff;border-color:#554a69}.dark-mode .mm-feature-answer,.dark-mode .mm-stat,.dark-mode .mm-result,.dark-mode .mm-day,.dark-mode .mm-prompt{background:#352e47;border-color:#55496b;color:#eee8ff}.dark-mode .mm-feature-secondary,.dark-mode .mm-calendar-head button{background:#40365a;color:#eee8ff;border-color:#5b4e72}.dark-mode .mm-day-num,.dark-mode .mm-day-count{color:#b7acc9}.dark-mode .mm-bar{background:#4b4260}
+  @media(max-width:650px){.mm-feature-card{padding:19px}.mm-mood-grid{grid-template-columns:repeat(4,1fr)}.mm-stat-grid{grid-template-columns:1fr}.mm-prompt-grid{grid-template-columns:1fr}}
+`;
+document.head.appendChild(style);
 
-async function load() {
-  if (!user) { entries = []; return; }
-  try {
-    const q = query(collection(db, "journalEntries"), where("userId", "==", user.uid));
-    const snapshot = await getDocs(q);
-    entries = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).sort((a, b) => dOf(b) - dOf(a));
-  } catch (error) {
-    console.error("Phase 1 load error", error);
-    entries = [];
-  }
+function esc(value) {
+  return String(value ?? "").replace(/[&<>\"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[char]));
 }
 
-function addButton() {
-  const side = document.querySelector(".sidebar");
-  if (!side) return;
-  if (!user) {
-    document.querySelector(".mm-insights-btn")?.remove();
-    return;
-  }
-  if (document.querySelector(".mm-insights-btn")) return;
-  const button = document.createElement("button");
-  button.className = "mm-insights-btn";
-  button.textContent = "🧠 MindMate Insights";
-  button.onclick = () => openInsights();
-  side.insertBefore(button, side.querySelector(".sidebar-bottom") || null);
+function dateOf(value) {
+  if (!value) return new Date(0);
+  return value.toDate ? value.toDate() : new Date(value);
 }
 
-function closeInsights() {
-  modal?.remove();
-  modal = null;
+function dateLabel(value) {
+  return dateOf(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function openInsights(nextTab = "ask") {
-  tab = nextTab;
-  closeInsights();
-  modal = document.createElement("div");
-  modal.className = "mm-i-overlay";
-  modal.innerHTML = `
-    <div class="mm-i-modal">
-      <div class="mm-i-head">
-        <div><h2>🧠 MindMate Insights</h2><p>Understand your journal, moods, and patterns.</p></div>
-        <button class="mm-i-close">×</button>
-      </div>
-      <div class="mm-i-tabs">
-        <button class="mm-i-tab" data-t="ask">🧠 Ask MindMate</button>
-        <button class="mm-i-tab" data-t="calendar">📊 Mood Calendar</button>
-        <button class="mm-i-tab" data-t="growth">🌱 Your Growth</button>
-      </div>
-      <div class="mm-i-content"></div>
-    </div>`;
-  document.body.appendChild(modal);
-  modal.querySelector(".mm-i-close").onclick = closeInsights;
-  modal.addEventListener("click", (event) => { if (event.target === modal) closeInsights(); });
-  modal.querySelectorAll("[data-t]").forEach((button) => {
-    button.onclick = () => { tab = button.dataset.t; render(); };
-  });
-  render();
+function closePanel() {
+  document.querySelector(".mm-feature-modal")?.remove();
+  activePanel = null;
 }
 
-function render() {
-  if (!modal) return;
-  modal.querySelectorAll(".mm-i-tab").forEach((button) => button.classList.toggle("active", button.dataset.t === tab));
-  const content = modal.querySelector(".mm-i-content");
-  if (tab === "ask") ask(content);
-  else if (tab === "calendar") calendar(content);
-  else growth(content);
+function modal(title, subtitle, body) {
+  closePanel();
+  const overlay = document.createElement("div");
+  overlay.className = "mm-feature-modal";
+  overlay.innerHTML = `<section class="mm-feature-card"><div class="mm-feature-head"><div><h2>${title}</h2><p>${subtitle}</p></div><button class="mm-feature-close">×</button></div><div class="mm-feature-body">${body}</div></section>`;
+  overlay.querySelector(".mm-feature-close").onclick = closePanel;
+  overlay.onclick = (event) => { if (event.target === overlay) closePanel(); };
+  document.body.appendChild(overlay);
+  return overlay.querySelector(".mm-feature-body");
 }
 
-function ask(content) {
-  content.innerHTML = `
-    <div class="mm-i-card">
-      <h3>Ask anything about your journal 💜</h3>
-      <p style="color:#887b9d;font-size:13px">MindMate uses your saved entries to answer questions about themes, memories, and patterns.</p>
-      <div class="mm-i-suggest">
-        <button>What has been on my mind lately?</button>
-        <button>What makes me happiest?</button>
-        <button>What patterns do you notice?</button>
-      </div>
-      <textarea class="mm-i-input" id="mm-q" placeholder="Ask MindMate something..."></textarea>
-      <button class="mm-i-primary" id="mm-ask">✨ Ask MindMate</button>
-      <div id="mm-a"></div>
-    </div>`;
-  const questionBox = modal.querySelector("#mm-q");
-  modal.querySelectorAll(".mm-i-suggest button").forEach((button) => { button.onclick = () => { questionBox.value = button.textContent; }; });
-  modal.querySelector("#mm-ask").onclick = async () => {
-    const question = questionBox.value.trim();
-    const answerBox = modal.querySelector("#mm-a");
+function recentEntries() {
+  return [...entries].sort((a, b) => dateOf(b.createdAt) - dateOf(a.createdAt));
+}
+
+async function refreshEntries() {
+  if (!currentUser) { entries = []; return; }
+  const q = query(collection(db, "journalEntries"), where("userId", "==", currentUser.uid));
+  const snap = await getDocs(q);
+  entries = snap.docs.map((item) => ({ id: item.id, ...item.data() }));
+  entries.sort((a, b) => dateOf(b.createdAt) - dateOf(a.createdAt));
+}
+
+function askMindMate() {
+  const body = modal("🧠 Ask MindMate", "Ask a question about patterns, feelings, or moments in your journal.", `<input class="mm-feature-input" id="mm-ask-input" placeholder="e.g. What has been making me happiest lately?"><div style="margin-top:11px"><button class="mm-feature-primary" id="mm-ask-btn">Ask MindMate</button></div><div id="mm-ask-answer"></div>`);
+  body.querySelector("#mm-ask-btn").onclick = async () => {
+    const question = body.querySelector("#mm-ask-input").value.trim();
+    const answer = body.querySelector("#mm-ask-answer");
     if (!question) return;
-    answerBox.innerHTML = '<div class="mm-i-answer">Thinking about your journal... ✨</div>';
+    answer.innerHTML = `<div class="mm-feature-answer">🤖 MindMate is thinking...</div>`;
     try {
-      const payload = entries.slice(0, 25).map((item) => ({ text: (item.text || "").slice(0, 1200), mood: item.mood || null, date: dateText(dOf(item)) }));
-      const response = await fetch(`${API}/ask`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, entries: payload }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Request failed");
-      answerBox.innerHTML = `<div class="mm-i-answer">${escapeHtml(result.answer)}</div>`;
+      const response = await fetch(`${API}/ask`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, entries: recentEntries().slice(0, 25) }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Request failed");
+      answer.innerHTML = `<div class="mm-feature-answer">${esc(data.answer)}</div>`;
     } catch (error) {
-      console.error(error);
-      answerBox.innerHTML = '<div class="mm-i-answer">MindMate could not answer right now. Please try again.</div>';
+      answer.innerHTML = `<div class="mm-feature-answer">MindMate could not answer right now. Please try again in a little while.</div>`;
     }
   };
 }
 
-function escapeHtml(value) {
-  const box = document.createElement("div");
-  box.textContent = value || "";
-  return box.innerHTML;
+let calendarDate = new Date();
+function moodCalendar() {
+  const body = modal("📊 Mood Calendar", "See your journal moods across the month at a glance.", `<div class="mm-calendar-head"><button id="mm-prev">‹</button><strong id="mm-month"></strong><button id="mm-next">›</button></div><div class="mm-mood-grid" id="mm-calendar"></div><p style="color:#887b99;font-size:12px">Each day shows your saved mood and the number of journal entries for that day.</p>`);
+  const draw = () => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    body.querySelector("#mm-month").textContent = calendarDate.toLocaleString("en-IN", { month: "long", year: "numeric" });
+    const days = new Date(year, month + 1, 0).getDate();
+    const start = new Date(year, month, 1).getDay();
+    const cells = [];
+    for (let i = 0; i < start; i++) cells.push(`<div></div>`);
+    for (let day = 1; day <= days; day++) {
+      const sameDay = entries.filter((item) => { const d = dateOf(item.createdAt); return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day; });
+      const moods = sameDay.map((item) => item.mood).filter(Boolean);
+      const moodKey = moods[0];
+      cells.push(`<div class="mm-day"><div class="mm-day-num">${day}</div><div class="mm-day-mood">${MOODS[moodKey]?.emoji || "·"}</div><div class="mm-day-count">${sameDay.length ? `${sameDay.length} ${sameDay.length === 1 ? "entry" : "entries"}` : ""}</div></div>`);
+    }
+    body.querySelector("#mm-calendar").innerHTML = cells.join("");
+  };
+  body.querySelector("#mm-prev").onclick = () => { calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1); draw(); };
+  body.querySelector("#mm-next").onclick = () => { calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1); draw(); };
+  draw();
 }
 
-function calendar(content) {
-  const year = calDate.getFullYear();
-  const month = calDate.getMonth();
-  const first = new Date(year, month, 1);
-  const days = new Date(year, month + 1, 0).getDate();
-  const start = first.getDay();
-  const map = {};
-  entries.forEach((item) => {
-    const itemKey = key(dOf(item));
-    (map[itemKey] ||= []).push(item);
+function growth() {
+  const sorted = recentEntries();
+  const moodCounts = sorted.reduce((acc, item) => { if (item.mood) acc[item.mood] = (acc[item.mood] || 0) + 1; return acc; }, {});
+  const commonMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
+  const monthCounts = sorted.reduce((acc, item) => { const d = dateOf(item.createdAt); const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; acc[key] = (acc[key] || 0) + 1; return acc; }, {});
+  const months = Object.entries(monthCounts).sort().slice(-6);
+  const max = Math.max(1, ...months.map(([, count]) => count));
+  let streak = 0;
+  const uniqueDays = [...new Set(sorted.map((item) => dateOf(item.createdAt).toDateString()))];
+  let cursor = new Date();
+  while (uniqueDays.includes(cursor.toDateString())) { streak++; cursor.setDate(cursor.getDate() - 1); }
+  const body = modal("🌱 Your Growth", "A simple look at how consistently you have been showing up for yourself.", `<div class="mm-stat-grid"><div class="mm-stat"><strong>${sorted.length}</strong><span>Total entries</span></div><div class="mm-stat"><strong>${streak}</strong><span>Day streak</span></div><div class="mm-stat"><strong>${commonMood ? MOODS[commonMood[0]]?.emoji || "💜" : "—"}</strong><span>Most common mood</span></div></div><h3 style="margin:5px 0 12px">Entries over time</h3><div>${months.length ? months.map(([key, count]) => { const [y, m] = key.split("-"); const label = new Date(Number(y), Number(m) - 1, 1).toLocaleString("en-IN", { month: "short" }); return `<div class="mm-bar-row"><span>${label} ${y}</span><div class="mm-bar"><i style="width:${Math.round(count / max * 100)}%"></i></div><b>${count}</b></div>`; }).join("") : `<div class="mm-feature-empty">Save a few journal entries and your growth view will appear here.</div>`}</div>`);
+}
+
+function weeklyReflection() {
+  const recent = recentEntries().slice(0, 7);
+  const body = modal("💭 Weekly Reflection", "Turn your recent entries into one calm, useful reflection.", `<button class="mm-feature-primary" id="mm-reflect">Create My Reflection</button><div id="mm-reflection"></div>`);
+  body.querySelector("#mm-reflect").onclick = async () => {
+    const target = body.querySelector("#mm-reflection");
+    if (!recent.length) { target.innerHTML = `<div class="mm-feature-empty">Write at least one journal entry first.</div>`; return; }
+    target.innerHTML = `<div class="mm-feature-answer">🤖 Looking across your week...</div>`;
+    try {
+      const response = await fetch(`${API}/ask`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: "Give me a warm weekly reflection based only on these journal entries. Mention recurring themes, positive moments, something I handled well, and one gentle focus for next week. Keep it concise and do not diagnose me.", entries: recent }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Request failed");
+      target.innerHTML = `<div class="mm-feature-answer">${esc(data.answer)}</div>`;
+    } catch { target.innerHTML = `<div class="mm-feature-answer">The reflection could not be created right now. Please try again later.</div>`; }
+  };
+}
+
+function memorySearch() {
+  const body = modal("🔍 Memory Search", "Find old journal moments without scrolling through every entry.", `<input class="mm-feature-input" id="mm-memory-input" placeholder="Search words like exam, friends, birthday..." autofocus><div id="mm-memory-results" style="margin-top:14px"></div>`);
+  const run = () => {
+    const term = body.querySelector("#mm-memory-input").value.trim().toLowerCase();
+    const results = term ? recentEntries().filter((item) => String(item.text || "").toLowerCase().includes(term)) : recentEntries();
+    body.querySelector("#mm-memory-results").innerHTML = results.length ? results.slice(0, 20).map((item) => `<div class="mm-result" data-id="${esc(item.id)}"><strong>${dateLabel(item.createdAt)} ${item.mood ? `• ${MOODS[item.mood]?.emoji || ""}` : ""}</strong><span>${esc(String(item.text || "").slice(0, 180))}${String(item.text || "").length > 180 ? "…" : ""}</span></div>`).join("") : `<div class="mm-feature-empty">No matching memories found.</div>`;
+  };
+  body.querySelector("#mm-memory-input").oninput = run;
+  run();
+}
+
+function writingPrompts() {
+  const prompts = [
+    "What made you smile recently, even for a moment?",
+    "What is something you handled better than you expected?",
+    "If today had a color, what would it be and why?",
+    "What are you looking forward to right now?",
+    "Write a note to yourself for a difficult day.",
+    "What is one small thing you want to improve this week?",
+    "Describe a place where you feel completely comfortable.",
+    "What is a memory you never want to forget?",
+    "What would you tell your past self from one year ago?",
+    "What are three things you are grateful for today?",
+  ];
+  const body = modal("📝 Writing Prompts", "A little inspiration for days when the blank page feels too blank.", `<div class="mm-prompt-grid">${prompts.map((prompt, i) => `<button class="mm-prompt" data-prompt="${i}">${esc(prompt)}</button>`).join("")}</div><div id="mm-prompt-message" style="margin-top:15px;color:#796c8d;font-size:12px"></div>`);
+  body.querySelectorAll(".mm-prompt").forEach((button) => button.onclick = () => {
+    body.querySelector("#mm-prompt-message").textContent = `Prompt selected: ${prompts[Number(button.dataset.prompt)]}`;
   });
-
-  let html = `<div class="mm-i-card"><div class="mm-cal-head"><button id="mm-cprev">‹</button><strong>${calDate.toLocaleString("en-IN", { month: "long", year: "numeric" })}</strong><button id="mm-cnext">›</button></div><div class="mm-cal">`;
-  html += ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((name) => `<div class="mm-cal-name">${name}</div>`).join("");
-  for (let i = 0; i < start; i++) html += '<div class="mm-day empty"></div>';
-  for (let day = 1; day <= days; day++) {
-    const current = new Date(year, month, day);
-    const list = map[key(current)] || [];
-    const mood = list.find((item) => item.mood)?.mood;
-    const today = key(current) === key(new Date());
-    html += `<div class="mm-day ${today ? "today" : ""}"><span class="mm-day-num">${day}</span>${mood ? `<span class="mm-day-mood">${MOODS[mood] || "💜"}</span>` : ""}${list.length ? `<div class="mm-day-count">${list.length} ${list.length === 1 ? "entry" : "entries"}</div>` : ""}</div>`;
-  }
-  html += '</div><p style="color:#887b9d;font-size:12px;margin-bottom:0">Each emoji represents the mood recorded for that day.</p></div>';
-  content.innerHTML = html;
-  modal.querySelector("#mm-cprev").onclick = () => { calDate = new Date(year, month - 1, 1); render(); };
-  modal.querySelector("#mm-cnext").onclick = () => { calDate = new Date(year, month + 1, 1); render(); };
 }
 
-function streak() {
-  const days = [...new Set(entries.map((item) => key(dOf(item))))].sort();
-  let best = 0;
-  let run = 0;
-  for (let i = 0; i < days.length; i++) {
-    if (i && Math.round((new Date(days[i]) - new Date(days[i - 1])) / 86400000) !== 1) run = 0;
-    run += 1;
-    best = Math.max(best, run);
-  }
-  return best;
+function addSidebarItem(label, icon, key, handler) {
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar || sidebar.querySelector(`[data-mm-feature="${key}"]`)) return;
+  const button = document.createElement("button");
+  button.className = "side-item";
+  button.dataset.mmFeature = key;
+  button.innerHTML = `<span>${icon}</span> ${label}`;
+  button.onclick = (event) => { event.stopPropagation(); document.querySelectorAll(".side-item").forEach((item) => item.classList.remove("mm-feature-active")); button.classList.add("mm-feature-active"); handler(); };
+  const bottom = sidebar.querySelector(".sidebar-bottom");
+  sidebar.insertBefore(button, bottom || null);
 }
 
-function growth(content) {
-  const monthMap = {};
-  entries.forEach((item) => {
-    const date = dOf(item);
-    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-    monthMap[monthKey] ||= { date: new Date(date.getFullYear(), date.getMonth(), 1), count: 0, moods: [] };
-    monthMap[monthKey].count += 1;
-    if (item.mood) monthMap[monthKey].moods.push(item.mood);
-  });
-  const months = Object.values(monthMap).sort((a, b) => a.date - b.date).slice(-6);
-  const max = Math.max(...months.map((item) => item.count), 1);
-  const counts = {};
-  entries.forEach((item) => { if (item.mood) counts[item.mood] = (counts[item.mood] || 0) + 1; });
-  const common = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
-
-  content.innerHTML = `
-    <div class="mm-i-card">
-      <h3>🌱 Your Growth Timeline</h3>
-      <p style="color:#887b9d;font-size:13px">See how your journaling habit is building over time.</p>
-      <div class="mm-growth-stats">
-        <div class="mm-stat"><strong>${entries.length}</strong><span>Total entries</span></div>
-        <div class="mm-stat"><strong>${common ? MOODS[common] : "—"}</strong><span>${common ? LABELS[common] : "No mood yet"}</span></div>
-        <div class="mm-stat"><strong>${streak()}</strong><span>Best day streak</span></div>
-      </div>
-      ${months.length ? `<div class="mm-bars">${months.map((item) => `<div class="mm-bar-wrap"><span>${item.moods.length ? MOODS[item.moods[0]] : ""}</span><div class="mm-bar" style="height:${Math.max(8, item.count / max * 155)}px"></div><span class="mm-bar-label">${item.date.toLocaleString("en-IN", { month: "short" })}</span></div>`).join("")}</div>` : ""}
-      <div class="mm-note">${entries.length < 3 ? "Keep writing. Your growth timeline becomes more useful as you build your journal." : `You have ${entries.length} saved entries. Keep checking in with yourself — the changes become clearer over time. 💜`}</div>
-    </div>`;
+function setupSidebar() {
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar) return false;
+  document.querySelectorAll("[data-mm-old-insights],.mindmate-insights-button,.mindmate-insights-btn").forEach((item) => item.remove());
+  addSidebarItem("Ask MindMate", "🧠", "ask", askMindMate);
+  addSidebarItem("Mood Calendar", "📊", "calendar", moodCalendar);
+  addSidebarItem("Your Growth", "🌱", "growth", growth);
+  addSidebarItem("Weekly Reflection", "💭", "weekly", weeklyReflection);
+  addSidebarItem("Memory Search", "🔍", "memory", memorySearch);
+  addSidebarItem("Writing Prompts", "📝", "prompts", writingPrompts);
+  return true;
 }
 
-onAuthStateChanged(auth, async (currentUser) => {
-  user = currentUser;
-  await load();
-  addButton();
+function observeApp() {
+  setupSidebar();
+  const observer = new MutationObserver(() => setupSidebar());
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  if (!user) { entries = []; closePanel(); return; }
+  try { await refreshEntries(); } catch (error) { console.error("MindMate feature data error:", error); }
 });
 
-new MutationObserver(() => addButton()).observe(document.body, { childList: true, subtree: true });
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", observeApp, { once: true });
+else observeApp();

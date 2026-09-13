@@ -1,0 +1,62 @@
+/* Safe theme layer: CSS only. It does not touch authentication or app logic. */
+.app.dark-mode {
+  color: #eee8f7;
+  background: radial-gradient(circle at 70% 10%, #302943 0, #211d2e 48%, #171520 100%);
+}
+.dark-mode .topbar { background: rgba(28,24,39,.9); border-bottom-color:#403752; }
+.dark-mode .brand-icon,.dark-mode .icon-button,.dark-mode .profile-pill { background:#29243a; border-color:#4a4160; color:#eee8f7; }
+.dark-mode .brand h1,.dark-mode .brand span,.dark-mode .profile-pill strong { color:#eee8f7; }
+.dark-mode .sidebar { background:rgba(27,23,38,.72); border-right-color:#403752; }
+.dark-mode .side-item,.dark-mode .side-logout { color:#c9c0d9; }
+.dark-mode .side-item:hover,.dark-mode .side-item.active { background:#40365b; color:#fff; }
+.dark-mode .side-logout:hover { background:#352d49; }
+.dark-mode .welcome-row h2,.dark-mode .section-intro h2 { color:#f0e9fa; }
+.dark-mode .welcome-row p:not(.eyebrow),.dark-mode .section-intro > p:not(.eyebrow) { color:#aaa0b9; }
+.dark-mode .quote-card { background:#39304d; color:#c8bfd5; }
+.dark-mode .quote-card strong { color:#eee7fa; }
+.dark-mode .book-shell { background:linear-gradient(135deg,#574875,#3b3155 60%,#51416e); }
+.dark-mode .book-page { background-color:#302b38; color:#e7dfed; border-color:#51475b; background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 35px,rgba(180,170,195,.13) 36px,transparent 37px); }
+.dark-mode .book-page textarea { color:#eee6f2; }
+.dark-mode .book-page textarea::placeholder { color:#81778e; }
+.dark-mode .book-title { background:#594052; color:#f0e5eb; }
+.dark-mode .today-date,.dark-mode .book-hint { color:#aaa0b5; }
+.dark-mode .sticker-controls { background:#29243a; border-color:#4b4161; box-shadow:0 8px 20px rgba(0,0,0,.35); }
+.dark-mode .sticker-controls button { background:#41365a; color:#eee7fa; }
+.dark-mode .sticker-controls button:hover { background:#55466f; }
+.dark-mode .sticker-panel { background:rgba(38,33,53,.98); border-color:#514668; box-shadow:0 18px 45px rgba(0,0,0,.4); }
+.dark-mode .sticker-panel-title strong { color:#eee7fa; }
+.dark-mode .sticker-panel-title small,.dark-mode .sticker-help { color:#aaa0b9; }
+.dark-mode .close-stickers { background:#322c45; color:#eee7fa; border-color:#514668; }
+.dark-mode .sticker-tabs button { background:#3a3150; color:#cfc5df; }
+.dark-mode .sticker-tabs button.active { background:#7658c8; color:#fff; }
+.dark-mode .sticker-choice { background:#342d45; border-color:#4c4261; }
+.dark-mode .sticker-choice:hover { background:#46385e; }
+.dark-mode .secondary-action { background:#51426e; color:#f1eafa; }
+.dark-mode .danger-action { background:#513541; color:#ffd9e1; }
+.dark-mode .analysis,.dark-mode .date-entry,.dark-mode .journal-search,.dark-mode .empty-journal { background:rgba(43,37,57,.9); border-color:#4b4260; }
+.dark-mode .analysis h3,.dark-mode .analysis-section h4,.dark-mode .date-entry-info strong { color:#eee7fa; }
+.dark-mode .analysis-section p,.dark-mode .date-entry-info span,.dark-mode .message { color:#b7aec5; }
+.dark-mode .journal-search input { color:#eee7fa; }
+.dark-mode .date-entry-icon,.dark-mode .view-entry-button { background:#3c3352; color:#e9e0f5; }
+.dark-mode .entry-menu { background:#302a40; border-color:#4b4260; }
+.dark-mode .entry-menu button { color:#ddd4e7; }
+.dark-mode .entry-menu button:hover { background:#403652; }
+
+/* Keep floating sticker controls anchored to the selected sticker. */
+.sticker-controls { position:absolute; left:50%; top:-46px; transform:translateX(-50%) !important; transition:none !important; animation:none !important; }
+.sticker-controls button { transition:none !important; animation:none !important; }
+
+/* Template cards: only appearance changes in dark mode; template behavior is untouched. */
+.dark-mode .mm-template-card[data-template="floral"] { background:#4b3652 !important; }
+.dark-mode .mm-template-card[data-template="dreamy"] { background:#35415a !important; }
+.dark-mode .mm-template-card[data-template="nature"] { background:#354a3d !important; }
+.dark-mode .mm-template-card[data-template="night"] { background:#44365e !important; }
+.dark-mode .mm-template-card[data-template="cute"] { background:#513b49 !important; }
+.dark-mode .mm-template-card[data-template="minimal"] { background:#41404d !important; }
+
+/* Water-tracker styles are ready for the React section. */
+.water-tracker-card { border-radius:20px; padding:20px; border:1px solid #ddd2f1; background:rgba(255,255,255,.76); box-shadow:0 10px 30px rgba(72,49,130,.08); }
+.water-tracker-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.water-tracker-actions button { border:0; border-radius:12px; padding:9px 12px; background:#e8dcff; color:#4c3976; font-weight:700; cursor:pointer; }
+.dark-mode .water-tracker-card { background:rgba(43,37,57,.9); border-color:#4b4260; }
+.dark-mode .water-tracker-actions button { background:#43365b; color:#eee7fa; }

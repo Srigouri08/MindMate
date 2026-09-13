@@ -11,7 +11,7 @@ const PROMPTS = [
   "If today had a title, what would you call it?",
   "What are you grateful for right now?",
 ];
-const MOODS = { great:"😄", good:"😌", okay:"😐", low:"😔", rough:"😣" };
+const MOODS = { great: "😄", good: "😌", okay: "😐", low: "😔", rough: "😣" };
 
 const style = document.createElement("style");
 style.textContent = `
@@ -26,30 +26,314 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-function sidebar(label){return [...document.querySelectorAll(".sidebar .side-item")].find(b=>(b.textContent||"").replace(/\s+/g," ").trim().toLowerCase().includes(label.toLowerCase()))}
-function cleanNav(){document.querySelectorAll(".sidebar .side-item").forEach(b=>{if(/Memory Search|Weekly Reflection|Ask MindMate/i.test(b.textContent||""))b.remove()})}
-function getEntries(){const u=auth.currentUser;if(!u)return Promise.resolve([]);return getDocs(query(collection(db,"journalEntries"),where("userId","==",u.uid))).then(s=>s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>date(b)-date(a)))}
-function date(e){return e?.createdAt?.toDate?.()||new Date(e?.createdAt||0)}
-function showMain(el){const main=document.querySelector(".main-content");if(!main)return;main.innerHTML="";main.appendChild(el)}
-function backToJournal(){sidebar("My Journal")?.click()}
-
-function askPanel(){
-  const heading=[...document.querySelectorAll(".main-content h2")].find(h=>(h.textContent||"").includes("My Journal"));
-  if(!heading||heading.dataset.mmAsk)return;
-  heading.dataset.mmAsk="1";const row=heading.parentElement;row.style.display="flex";row.style.alignItems="center";row.style.gap="10px";
-  const b=document.createElement("button");b.className="mm-ux-ask-button mm-ux-back";b.textContent="🧠 Ask MindMate";row.appendChild(b);
-  b.onclick=()=>{let box=document.querySelector(".mm-ux-inline[data-ask]");if(box){box.remove();return}box=document.createElement("div");box.className="mm-ux-inline";box.dataset.ask="1";box.innerHTML=`<h3>🧠 Ask MindMate</h3><p>Ask something about your saved journal entries.</p><div class="mm-ux-ask"><input placeholder="What has been making me happy lately?"><button>Ask</button></div><div class="mm-ux-answer" hidden></div>`;heading.parentElement.parentElement.appendChild(box);const input=box.querySelector("input"),ask=box.querySelector("button"),answer=box.querySelector(".mm-ux-answer");const run=async()=>{if(!input.value.trim())return;ask.disabled=true;ask.textContent="Thinking…";answer.hidden=false;answer.textContent="MindMate is thinking…";try{const entries=await getEntries();const r=await fetch(`${API}/ask`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:input.value.trim(),entries:entries.slice(0,25).map(e=>({text:e.text,date:date(e).toISOString(),mood:e.mood||null}))})});const d=await r.json();if(!r.ok)throw Error();answer.textContent=d.answer||"I couldn't answer that right now."}catch{answer.textContent="MindMate couldn't answer right now. Please try again in a moment."}ask.disabled=false;ask.textContent="Ask"};ask.onclick=run;input.onkeydown=e=>e.key==="Enter"&&run()};
+function sidebar(label){
+  return [...document.querySelectorAll(".sidebar .side-item")].find((b) =>
+    (b.textContent || "").replace(/\s+/g, " ").trim().toLowerCase().includes(label.toLowerCase())
+  );
 }
 
-function showGrowth(){const el=document.createElement("section");el.className="mm-ux-section";el.innerHTML=`<div class="mm-ux-section-head"><div><p class="eyebrow">Look back gently</p><h2>🌱 Your Growth</h2><p>A simple picture of how your journaling has grown.</p></div><button class="mm-ux-back">← My Journal</button></div><div class="mm-ux-grid"><div class="mm-ux-card"><h3>Total entries</h3><div class="mm-ux-stat" data-total>—</div></div><div class="mm-ux-card"><h3>Most common mood</h3><div class="mm-ux-stat" data-mood>—</div></div><div class="mm-ux-card"><h3>Journaling streak</h3><div class="mm-ux-stat" data-streak>—</div></div><div class="mm-ux-card"><h3>Recent themes</h3><p data-themes>Loading…</p></div></div>`;showMain(el);el.querySelector("button").onclick=backToJournal;getEntries().then(es=>{el.querySelector("[data-total]").textContent=es.length;const c=es.filter(e=>e.mood).reduce((a,e)=>(a[e.mood]=(a[e.mood]||0)+1,a),{}),m=Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0];el.querySelector("[data-mood]").textContent=m?`${MOODS[m]} ${m}`:"Not enough data";const keys=[...new Set(es.map(e=>{const d=date(e);return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`}))];let streak=0,n=new Date();n.setHours(0,0,0,0);for(;;){const k=`${n.getFullYear()}-${n.getMonth()+1}-${n.getDate()}`;if(!keys.includes(k))break;streak++;n.setDate(n.getDate()-1)}el.querySelector("[data-streak]").textContent=`${streak} day${streak===1?"":"s"}`;const words={Studies:["study","exam","college","class","coding"],Friends:["friend","friends"],Family:["family","mom","dad","sister","brother"],Growth:["learn","goal","growth","future"],SelfCare:["sleep","rest","walk","health","calm"]};const text=es.map(e=>e.text||"").join(" ").toLowerCase();const themes=Object.entries(words).filter(([,w])=>w.some(x=>text.includes(x))).map(([k])=>k);el.querySelector("[data-themes]").textContent=themes.join(" • ")||"Everyday life"}).catch(()=>{});}
+function cleanNav(){
+  document.querySelectorAll(".sidebar .side-item").forEach((b) => {
+    if (/Memory Search|Weekly Reflection|Ask MindMate/i.test(b.textContent || "")) b.remove();
+  });
+}
 
-function showWellness(){const el=document.createElement("section");el.className="mm-ux-section";el.innerHTML=`<div class="mm-ux-section-head"><div><p class="eyebrow">Your everyday check-in</p><h2>🌿 Wellness Calendar</h2><p>See your mood and water habit together.</p></div><button class="mm-ux-back">← My Journal</button></div><div class="mm-ux-card"><div class="mm-ux-month"><button data-p>‹</button><strong data-title></strong><button data-n>›</button></div><div class="mm-ux-days" data-days></div></div>`;showMain(el);el.querySelector(".mm-ux-back").onclick=backToJournal;let cur=new Date();cur.setDate(1);getEntries().then(es=>{const render=()=>{const days=el.querySelector("[data-days]"),title=el.querySelector("[data-title]");title.textContent=cur.toLocaleString("en-IN",{month:"long",year:"numeric"});days.innerHTML="";const first=new Date(cur.getFullYear(),cur.getMonth(),1).getDay(),count=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();for(let i=0;i<first;i++)days.appendChild(document.createElement("div"));for(let d=1;d<=count;d++){const iso=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;const e=es.find(x=>{const q=date(x);return `${q.getFullYear()}-${String(q.getMonth()+1).padStart(2,"0")}-${String(q.getDate()).padStart(2,"0")}`===iso});const water=Number(localStorage.getItem(`mindmate-water-${auth.currentUser?.uid}-${iso}`)||0);const c=document.createElement("div");c.className="mm-ux-day";c.innerHTML=`<strong>${d}</strong><span>${e?.mood?MOODS[e.mood]:"·"}</span><small>💧 ${water?water/1000:0}L</small>`;days.appendChild(c)}};el.querySelector("[data-p]").onclick=()=>{cur.setMonth(cur.getMonth()-1);render()};el.querySelector("[data-n]").onclick=()=>{cur.setMonth(cur.getMonth()+1);render()};render()}).catch(()=>{});}
+function getEntries(){
+  const u = auth.currentUser;
+  if (!u) return Promise.resolve([]);
+  return getDocs(query(collection(db, "journalEntries"), where("userId", "==", u.uid)))
+    .then((s) => s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => date(b) - date(a)));
+}
 
-function sectionButtons(){const m=sidebar("Mood Calendar"),g=sidebar("Your Growth");if(m&&!m.dataset.mmUx){m.dataset.mmUx="1";m.onclick=e=>{e.stopPropagation();showWellness()}}if(g&&!g.dataset.mmUx){g.dataset.mmUx="1";g.onclick=e=>{e.stopPropagation();showGrowth()}}}
-function promptButton(){const t=document.querySelector('.mm-toolbar[data-mm-final]');if(!t||t.querySelector('[data-mm-writing-prompt]'))return;const b=document.createElement('button');b.className='mm-tool';b.dataset.mmWritingPrompt='1';b.title='Writing prompts';b.textContent='✍️';t.appendChild(b);b.onclick=e=>{e.stopPropagation();document.querySelector('.mm-ux-prompt')?.remove();const p=document.createElement('div');p.className='mm-ux-prompt';p.innerHTML='<button class="close">×</button><h3>✍️ Writing Prompts</h3><p>Pick one to start writing.</p>';document.body.appendChild(p);PROMPTS.forEach(text=>{const x=document.createElement('button');x.textContent=text;x.onclick=()=>{const ta=document.querySelector('.book-page textarea');if(ta){const set=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')?.set;set?.call(ta,text);ta.dispatchEvent(new Event('input',{bubbles:true}));ta.focus()}p.remove()};p.appendChild(x)});p.querySelector('.close').onclick=()=>p.remove()})}
-function littleMoments(){const b=sidebar("Little Moments");if(!b||b.dataset.mmUx)return;b.dataset.mmUx="1";b.onclick=e=>{e.stopPropagation();sidebar("My Journal")?.click();setTimeout(()=>{const photo=[...document.querySelectorAll('.mm-toolbar[data-mm-final] .mm-tool')].find(x=>/photo/i.test(x.title||"")||x.textContent.includes('📸'));photo?.click()},250)}}
-function patch(){if(!auth.currentUser||!document.querySelector('.workspace'))return;cleanNav();sectionButtons();askPanel();promptButton();littleMoments()}
-let timer=null,observer=null;
-function start(){if(timer)return;patch();timer=setInterval(patch,700);observer=new MutationObserver(patch);observer.observe(document.body,{childList:true,subtree:true})}
-function stop(){if(timer){clearInterval(timer);timer=null}if(observer){observer.disconnect();observer=null}}
-auth.onAuthStateChanged(user=>{if(user) setTimeout(start,0); else stop()});
+function date(e){
+  return e?.createdAt?.toDate?.() || new Date(e?.createdAt || 0);
+}
+
+function showMain(el){
+  const main = document.querySelector(".main-content");
+  if (!main) return;
+  main.innerHTML = "";
+  main.appendChild(el);
+}
+
+function backToJournal(){
+  sidebar("My Journal")?.click();
+}
+
+function askPanel(){
+  const heading = [...document.querySelectorAll(".main-content h2")].find((h) =>
+    (h.textContent || "").includes("My Journal")
+  );
+  if (!heading || heading.dataset.mmAsk) return;
+
+  heading.dataset.mmAsk = "1";
+  const row = heading.parentElement;
+  if (!row) return;
+  row.style.display = "flex";
+  row.style.alignItems = "center";
+  row.style.gap = "10px";
+
+  const b = document.createElement("button");
+  b.className = "mm-ux-ask-button mm-ux-back";
+  b.textContent = "🧠 Ask MindMate";
+  row.appendChild(b);
+
+  b.onclick = () => {
+    let box = document.querySelector(".mm-ux-inline[data-ask]");
+    if (box) {
+      box.remove();
+      return;
+    }
+
+    box = document.createElement("div");
+    box.className = "mm-ux-inline";
+    box.dataset.ask = "1";
+    box.innerHTML = `<h3>🧠 Ask MindMate</h3><p>Ask something about your saved journal entries.</p><div class="mm-ux-ask"><input placeholder="What has been making me happy lately?"><button>Ask</button></div><div class="mm-ux-answer" hidden></div>`;
+
+    const parent = heading.parentElement?.parentElement;
+    if (!parent) return;
+    parent.appendChild(box);
+
+    const input = box.querySelector("input");
+    const ask = box.querySelector("button");
+    const answer = box.querySelector(".mm-ux-answer");
+
+    const run = async () => {
+      if (!input.value.trim()) return;
+      ask.disabled = true;
+      ask.textContent = "Thinking…";
+      answer.hidden = false;
+      answer.textContent = "MindMate is thinking…";
+      try {
+        const entries = await getEntries();
+        const r = await fetch(`${API}/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: input.value.trim(),
+            entries: entries.slice(0, 25).map((e) => ({
+              text: e.text,
+              date: date(e).toISOString(),
+              mood: e.mood || null,
+            })),
+          }),
+        });
+        const d = await r.json();
+        if (!r.ok) throw Error();
+        answer.textContent = d.answer || "I couldn't answer that right now.";
+      } catch {
+        answer.textContent = "MindMate couldn't answer right now. Please try again in a moment.";
+      }
+      ask.disabled = false;
+      ask.textContent = "Ask";
+    };
+
+    ask.onclick = run;
+    input.onkeydown = (e) => {
+      if (e.key === "Enter") run();
+    };
+  };
+}
+
+function showGrowth(){
+  const el = document.createElement("section");
+  el.className = "mm-ux-section";
+  el.innerHTML = `<div class="mm-ux-section-head"><div><p class="eyebrow">Look back gently</p><h2>🌱 Your Growth</h2><p>A simple picture of how your journaling has grown.</p></div><button class="mm-ux-back">← My Journal</button></div><div class="mm-ux-grid"><div class="mm-ux-card"><h3>Total entries</h3><div class="mm-ux-stat" data-total>—</div></div><div class="mm-ux-card"><h3>Most common mood</h3><div class="mm-ux-stat" data-mood>—</div></div><div class="mm-ux-card"><h3>Journaling streak</h3><div class="mm-ux-stat" data-streak>—</div></div><div class="mm-ux-card"><h3>Recent themes</h3><p data-themes>Loading…</p></div></div>`;
+  showMain(el);
+  el.querySelector("button").onclick = backToJournal;
+
+  getEntries().then((es) => {
+    el.querySelector("[data-total]").textContent = es.length;
+    const c = es.filter((e) => e.mood).reduce((a, e) => {
+      a[e.mood] = (a[e.mood] || 0) + 1;
+      return a;
+    }, {});
+    const m = Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0];
+    el.querySelector("[data-mood]").textContent = m ? `${MOODS[m]} ${m}` : "Not enough data";
+
+    const keys = [...new Set(es.map((e) => {
+      const d = date(e);
+      return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    }))];
+    let streak = 0;
+    const n = new Date();
+    n.setHours(0, 0, 0, 0);
+    for (;;) {
+      const k = `${n.getFullYear()}-${n.getMonth() + 1}-${n.getDate()}`;
+      if (!keys.includes(k)) break;
+      streak++;
+      n.setDate(n.getDate() - 1);
+    }
+    el.querySelector("[data-streak]").textContent = `${streak} day${streak === 1 ? "" : "s"}`;
+
+    const words = {
+      Studies: ["study", "exam", "college", "class", "coding"],
+      Friends: ["friend", "friends"],
+      Family: ["family", "mom", "dad", "sister", "brother"],
+      Growth: ["learn", "goal", "growth", "future"],
+      SelfCare: ["sleep", "rest", "walk", "health", "calm"],
+    };
+    const text = es.map((e) => e.text || "").join(" ").toLowerCase();
+    const themes = Object.entries(words)
+      .filter(([, w]) => w.some((x) => text.includes(x)))
+      .map(([k]) => k);
+    el.querySelector("[data-themes]").textContent = themes.join(" • ") || "Everyday life";
+  }).catch(() => {});
+}
+
+function showWellness(){
+  const el = document.createElement("section");
+  el.className = "mm-ux-section";
+  el.innerHTML = `<div class="mm-ux-section-head"><div><p class="eyebrow">Your everyday check-in</p><h2>🌿 Wellness Calendar</h2><p>See your mood and water habit together.</p></div><button class="mm-ux-back">← My Journal</button></div><div class="mm-ux-card"><div class="mm-ux-month"><button data-p>‹</button><strong data-title></strong><button data-n>›</button></div><div class="mm-ux-days" data-days></div></div>`;
+  showMain(el);
+  el.querySelector(".mm-ux-back").onclick = backToJournal;
+
+  let cur = new Date();
+  cur.setDate(1);
+
+  getEntries().then((es) => {
+    const render = () => {
+      const days = el.querySelector("[data-days]");
+      const title = el.querySelector("[data-title]");
+      title.textContent = cur.toLocaleString("en-IN", { month: "long", year: "numeric" });
+      days.innerHTML = "";
+
+      const first = new Date(cur.getFullYear(), cur.getMonth(), 1).getDay();
+      const count = new Date(cur.getFullYear(), cur.getMonth() + 1, 0).getDate();
+      for (let i = 0; i < first; i++) days.appendChild(document.createElement("div"));
+
+      for (let d = 1; d <= count; d++) {
+        const iso = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const e = es.find((x) => {
+          const q = date(x);
+          return `${q.getFullYear()}-${String(q.getMonth() + 1).padStart(2, "0")}-${String(q.getDate()).padStart(2, "0")}` === iso;
+        });
+        const water = Number(localStorage.getItem(`mindmate-water-${auth.currentUser?.uid}-${iso}`) || 0);
+        const c = document.createElement("div");
+        c.className = "mm-ux-day";
+        c.innerHTML = `<strong>${d}</strong><span>${e?.mood ? MOODS[e.mood] : "·"}</span><small>💧 ${water ? water / 1000 : 0}L</small>`;
+        days.appendChild(c);
+      }
+    };
+
+    el.querySelector("[data-p]").onclick = () => {
+      cur.setMonth(cur.getMonth() - 1);
+      render();
+    };
+    el.querySelector("[data-n]").onclick = () => {
+      cur.setMonth(cur.getMonth() + 1);
+      render();
+    };
+    render();
+  }).catch(() => {});
+}
+
+function sectionButtons(){
+  const m = sidebar("Mood Calendar");
+  const g = sidebar("Your Growth");
+  if (m && !m.dataset.mmUx) {
+    m.dataset.mmUx = "1";
+    m.onclick = (e) => {
+      e.stopPropagation();
+      showWellness();
+    };
+  }
+  if (g && !g.dataset.mmUx) {
+    g.dataset.mmUx = "1";
+    g.onclick = (e) => {
+      e.stopPropagation();
+      showGrowth();
+    };
+  }
+}
+
+function promptButton(){
+  const t = document.querySelector('.mm-toolbar[data-mm-final]');
+  if (!t || t.querySelector('[data-mm-writing-prompt]')) return;
+
+  const b = document.createElement('button');
+  b.className = 'mm-tool';
+  b.dataset.mmWritingPrompt = '1';
+  b.title = 'Writing prompts';
+  b.textContent = '✍️';
+  t.appendChild(b);
+
+  b.onclick = (e) => {
+    e.stopPropagation();
+    document.querySelector('.mm-ux-prompt')?.remove();
+    const p = document.createElement('div');
+    p.className = 'mm-ux-prompt';
+    p.innerHTML = '<button class="close">×</button><h3>✍️ Writing Prompts</h3><p>Pick one to start writing.</p>';
+    document.body.appendChild(p);
+
+    PROMPTS.forEach((text) => {
+      const x = document.createElement('button');
+      x.textContent = text;
+      x.onclick = () => {
+        const ta = document.querySelector('.book-page textarea');
+        if (ta) {
+          const set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+          set?.call(ta, text);
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+          ta.focus();
+        }
+        p.remove();
+      };
+      p.appendChild(x);
+    });
+
+    p.querySelector('.close').onclick = () => p.remove();
+  };
+}
+
+function littleMoments(){
+  const b = sidebar("Little Moments");
+  if (!b || b.dataset.mmUx) return;
+  b.dataset.mmUx = "1";
+  b.onclick = (e) => {
+    e.stopPropagation();
+    sidebar("My Journal")?.click();
+    setTimeout(() => {
+      const photo = [...document.querySelectorAll('.mm-toolbar[data-mm-final] .mm-tool')].find(
+        (x) => /photo/i.test(x.title || "") || (x.textContent || "").includes('📸')
+      );
+      photo?.click();
+    }, 250);
+  };
+}
+
+function patch(){
+  if (!auth.currentUser || !document.querySelector('.workspace')) return;
+  cleanNav();
+  sectionButtons();
+  askPanel();
+  promptButton();
+  littleMoments();
+}
+
+let timer = null;
+let observer = null;
+
+function start(){
+  if (timer) return;
+  patch();
+  timer = setInterval(patch, 700);
+  observer = new MutationObserver(patch);
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+function stop(){
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
+}
+
+auth.onAuthStateChanged((user) => {
+  if (user) setTimeout(start, 0);
+  else stop();
+});

@@ -6,6 +6,7 @@ import './mindmate-ui-fixes.js'
 import './mindmate-interaction-fix.js'
 import './stickerToolbarFix.js'
 import './mindmate-final-fix.js'
+import './littleMomentsSection.js'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

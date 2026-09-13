@@ -6,6 +6,7 @@ import './phaseOne.js'
 import './themeFix.js'
 import './wellnessFix.js'
 import './wellnessPolish.js'
+import './uxPolish.js'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

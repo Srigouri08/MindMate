@@ -72,3 +72,35 @@ body:has(.app.dark-mode) .mm-doodle-bar button {
   background: #41365a !important;
   color: #eee7fa !important;
 }
+
+/* Login card is inside .app, but its base CSS has a light background.
+   Override only the visual colors in dark mode; authentication logic is untouched. */
+.app.dark-mode .login-card {
+  background: rgba(38, 33, 53, .96) !important;
+  border-color: #514668 !important;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, .42) !important;
+  color: #eee7fa !important;
+}
+
+.app.dark-mode .login-card h2 {
+  color: #eee7fa !important;
+}
+
+.app.dark-mode .login-card .login-subtitle,
+.app.dark-mode .login-card .switch {
+  color: #aaa0b9 !important;
+}
+
+.app.dark-mode .login-card .link-button {
+  color: #a88be8 !important;
+}
+
+.app.dark-mode .login-card input {
+  background: #29243a !important;
+  border-color: #4b4260 !important;
+  color: #eee7fa !important;
+}
+
+.app.dark-mode .login-card input::placeholder {
+  color: #81778e !important;
+}

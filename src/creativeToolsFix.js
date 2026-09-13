@@ -1,99 +1,118 @@
 (() => {
   const STYLE_ID = "mindmate-creative-tools-style";
-
-  const templates = {
-    floral: { bg: "linear-gradient(135deg,#fff4fa,#f5edff)", border: "#ead1e7", shadow: "0 12px 30px rgba(130,80,140,.12)" },
-    dreamy: { bg: "linear-gradient(135deg,#eef6ff,#f8efff)", border: "#d8dff2", shadow: "0 12px 30px rgba(80,110,170,.12)" },
-    nature: { bg: "linear-gradient(135deg,#f0faef,#fffced)", border: "#d7e8d1", shadow: "0 12px 30px rgba(70,130,80,.10)" },
-    night: { bg: "linear-gradient(135deg,#302947,#51446d)", border: "#766b91", shadow: "0 12px 30px rgba(30,20,60,.25)" },
-    cute: { bg: "linear-gradient(135deg,#fff1f6,#fff9e9)", border: "#efd2df", shadow: "0 12px 30px rgba(180,100,130,.12)" },
-    minimal: { bg: "#ffffff", border: "#e5e0ea", shadow: "0 12px 30px rgba(80,70,100,.08)" }
-  };
+  const TEMPLATE_CLASSES = ["floral", "dreamy", "nature", "night", "cute", "minimal"];
 
   function installStyles() {
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      .mm-creative-panel{position:fixed;right:78px;top:50%;transform:translateY(-50%);width:330px;max-height:82vh;overflow:auto;z-index:10020;padding:20px;border:1px solid #ddd0f5;border-radius:22px;background:#fffafc;box-shadow:0 22px 55px rgba(50,30,100,.25);font-family:Arial,sans-serif;color:#46366c}
-      .mm-creative-panel h3{margin:0 0 6px}.mm-creative-panel p{margin:0 0 15px;color:#887b9d;font-size:12px}
-      .mm-creative-close{float:right;border:0;background:transparent;font-size:22px;color:#81748f;cursor:pointer}
-      .mm-creative-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-      .mm-creative-choice{border:1px solid #ded4ef;border-radius:13px;padding:12px 8px;background:#fff;cursor:pointer;color:#594582;font-weight:600;text-align:left}
-      .mm-creative-choice:hover{background:#eadfff;border-color:#7655d3}
-      .mm-color-row,.mm-size-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
-      .mm-color{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #d8cee8;cursor:pointer}
-      .mm-color.active{box-shadow:0 0 0 2px #7655d3}
-      .mm-size{border:1px solid #ded4ef;border-radius:10px;background:#fff;padding:8px 12px;cursor:pointer;color:#594582;font-weight:700}
-      .mm-size.active{background:#eadfff;border-color:#7655d3}
-      .mm-doodle-bar{gap:6px!important;flex-wrap:wrap;justify-content:center;max-width:92vw}
-      .mm-doodle-bar .mm-doodle-color{width:28px;height:28px;padding:0!important;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #d8cee8}
-      .mm-doodle-bar .mm-doodle-color.active{box-shadow:0 0 0 2px #7655d3}
-      .mm-doodle-bar .mm-doodle-size{min-width:44px}
-      @media(max-width:800px){.mm-creative-panel{right:58px;width:285px}}
+      /* Doodle controls */
+      .mm-doodle-bar.mm-enhanced{gap:7px!important;flex-wrap:wrap;justify-content:center;max-width:min(680px,94vw)}
+      .mm-doodle-bar .mm-doodle-label{font-size:11px;font-weight:800;color:#66547f;padding:0 2px;display:flex;align-items:center}
+      .mm-doodle-bar .mm-doodle-color{width:31px!important;height:31px!important;min-width:31px;padding:0!important;border-radius:50%!important;border:3px solid #fff!important;box-shadow:0 0 0 1px #b9aecb,0 2px 5px rgba(45,30,70,.16)!important;position:relative}
+      .mm-doodle-bar .mm-doodle-color.active{box-shadow:0 0 0 3px #7655d3,0 0 0 5px #fff!important;transform:scale(1.08)}
+      .mm-doodle-bar .mm-doodle-color.active::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:16px;font-weight:900;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+      .mm-doodle-bar .mm-doodle-size.active{background:#7655d3!important;color:#fff!important;border-color:#7655d3!important;box-shadow:0 0 0 2px rgba(118,85,211,.2)}
+      body:has(.app.dark-mode) .mm-doodle-bar{background:#302943!important}
+      body:has(.app.dark-mode) .mm-doodle-bar button:not(.done){background:#40355a;color:#eee7ff}
+      body:has(.app.dark-mode) .mm-doodle-bar .mm-doodle-label{color:#ddd2f3}
+
+      /* Template styling */
+      .book-page[class*="mm-template-"]{isolation:isolate;transition:background .25s ease,border-color .25s ease,box-shadow .25s ease}
+      .book-page[class*="mm-template-"]::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;border-radius:inherit}
+      .book-page[class*="mm-template-"]>.book-page-top,.book-page[class*="mm-template-"]>.margin-line,.book-page[class*="mm-template-"]>textarea,.book-page[class*="mm-template-"]>.placed-sticker,.book-page[class*="mm-template-"]>.book-hint{position:relative;z-index:1}
+
+      .book-page.mm-template-floral{background:#fff7fc!important;border-color:#e5bfd9!important;box-shadow:inset 0 0 0 2px rgba(213,130,179,.12)!important}
+      .book-page.mm-template-floral::before{background:radial-gradient(circle at 96% 7%,rgba(237,117,176,.25) 0 11px,transparent 12px),radial-gradient(circle at 91% 12%,rgba(179,122,215,.2) 0 7px,transparent 8px),radial-gradient(circle at 5% 92%,rgba(237,117,176,.15) 0 17px,transparent 18px),repeating-linear-gradient(0deg,transparent 0 31px,rgba(210,157,194,.17) 32px)}
+      .book-page.mm-template-floral .book-title{background:#f4dfec!important;color:#91496f!important;border-color:#d89cba!important}
+
+      .book-page.mm-template-dreamy{background:#f4f2ff!important;border-color:#c7c1e8!important;box-shadow:inset 0 0 0 2px rgba(128,113,190,.10)!important}
+      .book-page.mm-template-dreamy::before{background:radial-gradient(ellipse at 91% 9%,rgba(255,255,255,.95) 0 27px,transparent 28px),radial-gradient(ellipse at 85% 10%,rgba(255,255,255,.8) 0 20px,transparent 21px),radial-gradient(circle at 14% 86%,rgba(132,116,199,.17) 0 4px,transparent 5px),radial-gradient(circle at 20% 79%,rgba(132,116,199,.13) 0 3px,transparent 4px)}
+      .book-page.mm-template-dreamy .book-title{background:#e5e0fb!important;color:#61539a!important;border-color:#b9afe0!important}
+
+      .book-page.mm-template-nature{background:#f7fff4!important;border-color:#bcd5b8!important;box-shadow:inset 0 0 0 2px rgba(85,140,77,.09)!important}
+      .book-page.mm-template-nature::before{background:radial-gradient(ellipse at 95% 7%,rgba(78,145,77,.2) 0 18px,transparent 19px),radial-gradient(ellipse at 89% 13%,rgba(78,145,77,.13) 0 13px,transparent 14px),repeating-linear-gradient(0deg,transparent 0 31px,rgba(117,163,103,.15) 32px)}
+      .book-page.mm-template-nature .book-title{background:#e5f2df!important;color:#4c7549!important;border-color:#a8c89e!important}
+
+      .book-page.mm-template-night{background:#2e2843!important;border-color:#71638f!important;box-shadow:inset 0 0 0 2px rgba(255,244,184,.08)!important}
+      .book-page.mm-template-night::before{background:radial-gradient(circle at 88% 9%,#fff3ae 0 3px,transparent 4px),radial-gradient(circle at 94% 17%,rgba(255,255,255,.85) 0 2px,transparent 3px),radial-gradient(circle at 80% 24%,rgba(255,255,255,.7) 0 2px,transparent 3px),radial-gradient(circle at 12% 84%,rgba(255,255,255,.5) 0 2px,transparent 3px)}
+      .book-page.mm-template-night .book-title{background:#493c64!important;color:#fff0b7!important;border-color:#8172a5!important}.book-page.mm-template-night .today-date{color:#d9d0ea!important}.book-page.mm-template-night textarea{color:#f2edf8!important}
+
+      .book-page.mm-template-cute{background:#fff7fa!important;border-color:#e8bccc!important;box-shadow:inset 0 0 0 2px rgba(225,105,145,.09)!important}
+      .book-page.mm-template-cute::before{background:radial-gradient(circle at 94% 7%,rgba(232,91,139,.25) 0 7px,transparent 8px),radial-gradient(circle at 90% 7%,rgba(232,91,139,.25) 0 7px,transparent 8px),radial-gradient(circle at 92% 11%,rgba(232,91,139,.2) 0 10px,transparent 11px),repeating-linear-gradient(0deg,transparent 0 31px,rgba(231,166,187,.15) 32px)}
+      .book-page.mm-template-cute .book-title{background:#ffe5ed!important;color:#a34c70!important;border-color:#df9db4!important}
+
+      .book-page.mm-template-minimal{background:#fff!important;border-color:#d7d2dc!important;box-shadow:inset 0 0 0 1px rgba(80,70,95,.06)!important}
+      .book-page.mm-template-minimal::before{background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(110,100,125,.10) 32px)}
+      .book-page.mm-template-minimal .book-title{background:#f4f2f6!important;color:#514a5c!important;border-color:#d3ced8!important}
+      body:has(.app.dark-mode) .book-page.mm-template-minimal{background:#302b38!important;border-color:#5d5568!important}
+      body:has(.app.dark-mode) .book-page.mm-template-minimal::before{background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(225,215,235,.08) 32px)}
     `;
     document.head.appendChild(style);
   }
 
-  function getBook() {
-    return document.querySelector(".book-page");
+  function removeTemplateClasses(book) {
+    TEMPLATE_CLASSES.forEach((name) => book.classList.remove(`mm-template-${name}`));
   }
 
-  function applyTemplate(type) {
-    const book = getBook();
+  function applyTemplate(name) {
+    const book = document.querySelector(".book-page");
     if (!book) return;
-    const t = templates[type] || templates.minimal;
-    book.style.setProperty("background", t.bg, "important");
-    book.style.setProperty("border-color", t.border, "important");
-    book.style.setProperty("box-shadow", t.shadow, "important");
-    book.dataset.mindmateTemplate = type;
-    closePanel();
+    removeTemplateClasses(book);
+    book.classList.add(`mm-template-${name}`);
+    localStorage.setItem("mindmate-template", name);
   }
 
-  function closePanel() {
+  function closeTemplatePanel() {
     document.querySelector(".mm-creative-panel")?.remove();
   }
 
   function openTemplatePanel() {
-    closePanel();
+    closeTemplatePanel();
     const panel = document.createElement("div");
-    panel.className = "mm-creative-panel";
+    panel.className = "mm-panel mm-creative-panel";
     panel.innerHTML = `
-      <button class="mm-creative-close">×</button>
+      <button class="mm-close">×</button>
       <h3>🎨 Page Templates</h3>
-      <p>Choose a look for your journal page.</p>
-      <div class="mm-creative-grid">
-        <button class="mm-creative-choice" data-template="floral">🌸 <strong>Soft Floral</strong></button>
-        <button class="mm-creative-choice" data-template="dreamy">☁️ <strong>Dreamy</strong></button>
-        <button class="mm-creative-choice" data-template="nature">🌿 <strong>Nature</strong></button>
-        <button class="mm-creative-choice" data-template="night">🌙 <strong>Night Thoughts</strong></button>
-        <button class="mm-creative-choice" data-template="cute">🎀 <strong>Cute</strong></button>
-        <button class="mm-creative-choice" data-template="minimal">🤍 <strong>Minimal</strong></button>
+      <p>Each template changes the page mood, accents and details.</p>
+      <div class="mm-grid">
+        <button class="mm-template-card mm-floral" data-template="floral"><strong>🌸 Soft Floral</strong><small>Pink accents + journal lines</small></button>
+        <button class="mm-template-card mm-dreamy" data-template="dreamy"><strong>☁️ Dreamy</strong><small>Clouds + soft sky details</small></button>
+        <button class="mm-template-card mm-nature" data-template="nature"><strong>🌿 Nature</strong><small>Leaves + fresh green lines</small></button>
+        <button class="mm-template-card mm-night" data-template="night"><strong>🌙 Night Thoughts</strong><small>Dark page + little stars</small></button>
+        <button class="mm-template-card mm-cute" data-template="cute"><strong>🎀 Cute</strong><small>Pink hearts + scrapbook feel</small></button>
+        <button class="mm-template-card mm-minimal" data-template="minimal"><strong>🤍 Minimal</strong><small>Clean page + subtle lines</small></button>
       </div>`;
     document.body.appendChild(panel);
-    panel.querySelector(".mm-creative-close").onclick = closePanel;
+    panel.querySelector(".mm-close").onclick = closeTemplatePanel;
     panel.querySelectorAll("[data-template]").forEach((button) => {
-      button.onclick = () => applyTemplate(button.dataset.template);
+      button.onclick = () => {
+        applyTemplate(button.dataset.template);
+        panel.querySelectorAll("[data-template]").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        setTimeout(closeTemplatePanel, 180);
+      };
     });
   }
 
-  function openDoodle() {
-    const old = document.querySelector(".mm-doodle-fix");
-    if (old) old.remove();
-
+  function openEnhancedDoodle() {
+    document.querySelector(".mm-doodle-fix")?.remove();
     const overlay = document.createElement("div");
     overlay.className = "mm-doodle mm-doodle-fix";
     overlay.innerHTML = `
       <canvas></canvas>
-      <div class="mm-doodle-bar">
+      <div class="mm-doodle-bar mm-enhanced">
         <button class="undo">↶ Undo</button>
         <button class="clear">Clear</button>
+        <span class="mm-doodle-label">Color</span>
         <button class="mm-doodle-color active" data-color="#7655d3" style="background:#7655d3" title="Purple"></button>
         <button class="mm-doodle-color" data-color="#e85d8f" style="background:#e85d8f" title="Pink"></button>
         <button class="mm-doodle-color" data-color="#4f86e8" style="background:#4f86e8" title="Blue"></button>
         <button class="mm-doodle-color" data-color="#55a66a" style="background:#55a66a" title="Green"></button>
         <button class="mm-doodle-color" data-color="#e69b35" style="background:#e69b35" title="Orange"></button>
         <button class="mm-doodle-color" data-color="#333333" style="background:#333333" title="Black"></button>
+        <span class="mm-doodle-label">Size</span>
         <button class="mm-doodle-size active" data-size="3">S</button>
         <button class="mm-doodle-size" data-size="6">M</button>
         <button class="mm-doodle-size" data-size="10">L</button>
@@ -107,27 +126,32 @@
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
     ctx.scale(dpr, dpr);
-    ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#7655d3";
+    ctx.lineWidth = 3;
 
     let drawing = false;
     let history = [];
+    let last = null;
 
     canvas.onpointerdown = (event) => {
       drawing = true;
+      last = { x: event.clientX, y: event.clientY };
       history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-      ctx.beginPath();
-      ctx.moveTo(event.clientX, event.clientY);
+      canvas.setPointerCapture?.(event.pointerId);
     };
     canvas.onpointermove = (event) => {
-      if (!drawing) return;
+      if (!drawing || !last) return;
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
       ctx.lineTo(event.clientX, event.clientY);
       ctx.stroke();
+      last = { x: event.clientX, y: event.clientY };
     };
-    canvas.onpointerup = () => { drawing = false; };
-    canvas.onpointercancel = () => { drawing = false; };
+    const stop = () => { drawing = false; last = null; };
+    canvas.onpointerup = stop;
+    canvas.onpointercancel = stop;
 
     overlay.querySelector(".undo").onclick = () => {
       const previous = history.pop();
@@ -140,25 +164,24 @@
     overlay.querySelectorAll(".mm-doodle-color").forEach((button) => {
       button.onclick = () => {
         ctx.strokeStyle = button.dataset.color;
-        overlay.querySelectorAll(".mm-doodle-color").forEach((b) => b.classList.remove("active"));
+        overlay.querySelectorAll(".mm-doodle-color").forEach((item) => item.classList.remove("active"));
         button.classList.add("active");
       };
     });
     overlay.querySelectorAll(".mm-doodle-size").forEach((button) => {
       button.onclick = () => {
         ctx.lineWidth = Number(button.dataset.size);
-        overlay.querySelectorAll(".mm-doodle-size").forEach((b) => b.classList.remove("active"));
+        overlay.querySelectorAll(".mm-doodle-size").forEach((item) => item.classList.remove("active"));
         button.classList.add("active");
       };
     });
     overlay.querySelector(".done").onclick = () => overlay.remove();
   }
 
-  function wire() {
-    installStyles();
+  function wireToolbar() {
     const template = document.querySelector('.mm-toolbar .mm-tool[title="Page templates"]');
-    if (template && template.dataset.mmTemplateFix !== "1") {
-      template.dataset.mmTemplateFix = "1";
+    if (template && template.dataset.mmCreativeTemplate !== "1") {
+      template.dataset.mmCreativeTemplate = "1";
       template.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -167,19 +190,27 @@
     }
 
     const doodle = document.querySelector('.mm-toolbar .mm-tool[title="Doodle"]');
-    if (doodle && doodle.dataset.mmDoodleFix !== "1") {
-      doodle.dataset.mmDoodleFix = "1";
+    if (doodle && doodle.dataset.mmCreativeDoodle !== "1") {
+      doodle.dataset.mmCreativeDoodle = "1";
       doodle.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopImmediatePropagation();
-        openDoodle();
+        openEnhancedDoodle();
       }, true);
     }
   }
 
+  function restoreTemplate() {
+    const saved = localStorage.getItem("mindmate-template");
+    const book = document.querySelector(".book-page");
+    if (saved && TEMPLATE_CLASSES.includes(saved) && book && !book.classList.contains(`mm-template-${saved}`)) applyTemplate(saved);
+  }
+
   function start() {
-    wire();
-    new MutationObserver(() => requestAnimationFrame(wire)).observe(document.body, { childList: true, subtree: true });
+    installStyles();
+    wireToolbar();
+    restoreTemplate();
+    new MutationObserver(() => requestAnimationFrame(() => { wireToolbar(); restoreTemplate(); })).observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });

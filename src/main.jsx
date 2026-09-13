@@ -9,6 +9,7 @@ import './littleMomentsSection.js'
 import './mindmate-toolbar-scope.js'
 import './final-polish.js'
 import './wellnessFix.js'
+import './phaseOnePolish.js'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

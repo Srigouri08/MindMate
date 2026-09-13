@@ -15,21 +15,197 @@ css.textContent = `
 `;
 document.head.appendChild(css);
 
-let user=null, entries=[], modal=null, tab="ask", calDate=new Date();
-const dOf=x=>x?.createdAt?.toDate?x.createdAt.toDate():new Date(x?.createdAt||0);
-const key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-const dateText=d=>d.toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
+let user = null;
+let entries = [];
+let modal = null;
+let tab = "ask";
+let calDate = new Date();
 
-async function load(){if(!user)return;try{const q=query(collection(db,"journalEntries"),where("userId","==",user.uid));const s=await getDocs(q);entries=s.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>dOf(b)-dOf(a))}catch(e){console.error(e)}}
-function addButton(){const side=document.querySelector(".sidebar");if(!side)return;if(!user){document.querySelector(".mm-insights-btn")?.remove();return}if(document.querySelector(".mm-insights-btn"))return;const b=document.createElement("button");b.className="mm-insights-btn";b.textContent="🧠 MindMate Insights";b.onclick=()=>open();side.insertBefore(b,side.querySelector(".sidebar-bottom")||null)}
-function close(){modal?.remove();modal=null}
-function open(t="ask"){tab=t;close();modal=document.createElement("div");modal.className="mm-i-overlay";modal.innerHTML=`<div class="mm-i-modal"><div class="mm-i-head"><div><h2>🧠 MindMate Insights</h2><p>Understand your journal, moods, and patterns.</p></div><button class="mm-i-close">×</button></div><div class="mm-i-tabs"><button class="mm-i-tab" data-t="ask">🧠 Ask MindMate</button><button class="mm-i-tab" data-t="calendar">📊 Mood Calendar</button><button class="mm-i-tab" data-t="growth">🌱 Your Growth</button></div><div class="mm-i-content"></div></div>`;document.body.appendChild(modal);modal.querySelector(".mm-i-close").onclick=close;modal.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});render()}
-function render(){if(!modal)return;modal.querySelectorAll(".mm-i-tab").forEach(b=>b.classList.toggle("active",b.dataset.t===tab));const c=modal.querySelector(".mm-i-content");if(tab==="ask")ask(c);else if(tab==="calendar")calendar(c);else growth(c)}
-function ask(c){c.innerHTML=`<div class="mm-i-card"><h3>Ask anything about your journal 💜</h3><p style="color:#887b9d;font-size:13px">MindMate uses your saved entries to answer questions about themes, memories, and patterns.</p><div class="mm-i-suggest"><button>What has been on my mind lately?</button><button>What makes me happiest?</button><button>What patterns do you notice?</button></div><textarea class="mm-i-input" id="mm-q" placeholder="Ask MindMate something..."></textarea><button class="mm-i-primary" id="mm-ask">✨ Ask MindMate</button><div id="mm-a"></div></div>`;const q=modal.querySelector("#mm-q");modal.querySelectorAll(".mm-i-suggest button").forEach(b=>b.onclick=()=>q.value=b.textContent);modal.querySelector("#mm-ask").onclick=async()=>{const question=q.value.trim(),a=modal.querySelector("#mm-a");if(!question)return;a.innerHTML='<div class="mm-i-answer">Thinking about your journal... ✨</div>';try{const payload=entries.slice(0,30).map(x=>({text:x.text||"",mood:x.mood||null,date:dateText(dOf(x))}));const r=await fetch(`${API}/ask`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question,entries:payload})});const j=await r.json();if(!r.ok)throw new Error(j.error);a.innerHTML=`<div class="mm-i-answer">${esc(j.answer)}</div>`}catch(e){console.error(e);a.innerHTML='<div class="mm-i-answer">MindMate could not answer right now. Please try again.</div>'}}}
-function esc(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML}
-function calendar(c){const y=calDate.getFullYear(),m=calDate.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate(),start=first.getDay(),map={};entries.forEach(x=>{const k=key(dOf(x));(map[k]||(map[k]=[])).push(x)});let h=`<div class="mm-i-card"><div class="mm-cal-head"><button id="mm-cprev">‹</button><strong>${calDate.toLocaleString("en-IN",{month:"long",year:"numeric"})}</strong><button id="mm-cnext">›</button></div><div class="mm-cal">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(x=>`<div class="mm-cal-name">${x}</div>`).join("")}`;for(let i=0;i<start;i++)h+='<div class="mm-day empty"></div>';for(let n=1;n<=days;n++){const d=new Date(y,m,n),list=map[key(d)]||[],mood=list.find(x=>x.mood)?.mood;h+=`<div class="mm-day ${key(d)===key(new Date())?'today':''}"><span class="mm-day-num">${n}</span>${mood?`<span class="mm-day-mood">${MOODS[mood]||'💜'}</span>`:''}${list.length?`<div class="mm-day-count">${list.length} ${list.length===1?'entry':'entries'}</div>`:''}</div>`}h+='</div><p style="color:#887b9d;font-size:12px;margin-bottom:0">Each emoji represents the mood recorded for that day.</p></div>`;c.innerHTML=h;modal.querySelector("#mm-cprev").onclick=()=>{calDate=new Date(y,m-1,1);render()};modal.querySelector("#mm-cnext").onclick=()=>{calDate=new Date(y,m+1,1);render()}}
-function streak(){const days=[...new Set(entries.map(x=>key(dOf(x))))].sort();let best=0,run=0;for(let i=0;i<days.length;i++){if(i&&Math.round((new Date(days[i])-new Date(days[i-1]))/86400000)!==1)run=0;run++;best=Math.max(best,run)}return best}
-function growth(c){const map={};entries.forEach(x=>{const d=dOf(x),k=`${d.getFullYear()}-${d.getMonth()}`;(map[k]||(map[k]={d:new Date(d.getFullYear(),d.getMonth(),1),n:0,m:[]})).n++;if(x.mood)map[k].m.push(x.mood)});const months=Object.values(map).sort((a,b)=>a.d-b.d).slice(-6),max=Math.max(...months.map(x=>x.n),1),mc={};entries.forEach(x=>x.mood&&(mc[x.mood]=(mc[x.mood]||0)+1));const common=Object.entries(mc).sort((a,b)=>b[1]-a[1])[0]?.[0];c.innerHTML=`<div class="mm-i-card"><h3>🌱 Your Growth Timeline</h3><p style="color:#887b9d;font-size:13px">See how your journaling habit is building over time.</p><div class="mm-growth-stats"><div class="mm-stat"><strong>${entries.length}</strong><span>Total entries</span></div><div class="mm-stat"><strong>${common?MOODS[common]:'—'}</strong><span>${common?LABELS[common]:'No mood yet'}</span></div><div class="mm-stat"><strong>${streak()}</strong><span>Best day streak</span></div></div>${months.length?`<div class="mm-bars">${months.map(x=>`<div class="mm-bar-wrap"><span>${x.m.length?MOODS[x.m[0]]:''}</span><div class="mm-bar" style="height:${Math.max(8,x.n/max*155)}px"></div><span class="mm-bar-label">${x.d.toLocaleString('en-IN',{month:'short'})}</span></div>`).join('')}</div>`:''}<div class="mm-note">${entries.length<3?'Keep writing. Your growth timeline becomes more useful as you build your journal.':`You have ${entries.length} saved entries. Keep checking in with yourself — the changes become clearer over time. 💜`}</div></div>`}
+const dOf = (x) => x?.createdAt?.toDate ? x.createdAt.toDate() : new Date(x?.createdAt || 0);
+const key = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const dateText = (d) => d.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
-onAuthStateChanged(auth,async u=>{user=u;await load();addButton()});
-new MutationObserver(()=>addButton()).observe(document.body,{childList:true,subtree:true});
+async function load() {
+  if (!user) { entries = []; return; }
+  try {
+    const q = query(collection(db, "journalEntries"), where("userId", "==", user.uid));
+    const snapshot = await getDocs(q);
+    entries = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).sort((a, b) => dOf(b) - dOf(a));
+  } catch (error) {
+    console.error("Phase 1 load error", error);
+    entries = [];
+  }
+}
+
+function addButton() {
+  const side = document.querySelector(".sidebar");
+  if (!side) return;
+  if (!user) {
+    document.querySelector(".mm-insights-btn")?.remove();
+    return;
+  }
+  if (document.querySelector(".mm-insights-btn")) return;
+  const button = document.createElement("button");
+  button.className = "mm-insights-btn";
+  button.textContent = "🧠 MindMate Insights";
+  button.onclick = () => openInsights();
+  side.insertBefore(button, side.querySelector(".sidebar-bottom") || null);
+}
+
+function closeInsights() {
+  modal?.remove();
+  modal = null;
+}
+
+function openInsights(nextTab = "ask") {
+  tab = nextTab;
+  closeInsights();
+  modal = document.createElement("div");
+  modal.className = "mm-i-overlay";
+  modal.innerHTML = `
+    <div class="mm-i-modal">
+      <div class="mm-i-head">
+        <div><h2>🧠 MindMate Insights</h2><p>Understand your journal, moods, and patterns.</p></div>
+        <button class="mm-i-close">×</button>
+      </div>
+      <div class="mm-i-tabs">
+        <button class="mm-i-tab" data-t="ask">🧠 Ask MindMate</button>
+        <button class="mm-i-tab" data-t="calendar">📊 Mood Calendar</button>
+        <button class="mm-i-tab" data-t="growth">🌱 Your Growth</button>
+      </div>
+      <div class="mm-i-content"></div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector(".mm-i-close").onclick = closeInsights;
+  modal.addEventListener("click", (event) => { if (event.target === modal) closeInsights(); });
+  modal.querySelectorAll("[data-t]").forEach((button) => {
+    button.onclick = () => { tab = button.dataset.t; render(); };
+  });
+  render();
+}
+
+function render() {
+  if (!modal) return;
+  modal.querySelectorAll(".mm-i-tab").forEach((button) => button.classList.toggle("active", button.dataset.t === tab));
+  const content = modal.querySelector(".mm-i-content");
+  if (tab === "ask") ask(content);
+  else if (tab === "calendar") calendar(content);
+  else growth(content);
+}
+
+function ask(content) {
+  content.innerHTML = `
+    <div class="mm-i-card">
+      <h3>Ask anything about your journal 💜</h3>
+      <p style="color:#887b9d;font-size:13px">MindMate uses your saved entries to answer questions about themes, memories, and patterns.</p>
+      <div class="mm-i-suggest">
+        <button>What has been on my mind lately?</button>
+        <button>What makes me happiest?</button>
+        <button>What patterns do you notice?</button>
+      </div>
+      <textarea class="mm-i-input" id="mm-q" placeholder="Ask MindMate something..."></textarea>
+      <button class="mm-i-primary" id="mm-ask">✨ Ask MindMate</button>
+      <div id="mm-a"></div>
+    </div>`;
+  const questionBox = modal.querySelector("#mm-q");
+  modal.querySelectorAll(".mm-i-suggest button").forEach((button) => { button.onclick = () => { questionBox.value = button.textContent; }; });
+  modal.querySelector("#mm-ask").onclick = async () => {
+    const question = questionBox.value.trim();
+    const answerBox = modal.querySelector("#mm-a");
+    if (!question) return;
+    answerBox.innerHTML = '<div class="mm-i-answer">Thinking about your journal... ✨</div>';
+    try {
+      const payload = entries.slice(0, 25).map((item) => ({ text: (item.text || "").slice(0, 1200), mood: item.mood || null, date: dateText(dOf(item)) }));
+      const response = await fetch(`${API}/ask`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, entries: payload }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Request failed");
+      answerBox.innerHTML = `<div class="mm-i-answer">${escapeHtml(result.answer)}</div>`;
+    } catch (error) {
+      console.error(error);
+      answerBox.innerHTML = '<div class="mm-i-answer">MindMate could not answer right now. Please try again.</div>';
+    }
+  };
+}
+
+function escapeHtml(value) {
+  const box = document.createElement("div");
+  box.textContent = value || "";
+  return box.innerHTML;
+}
+
+function calendar(content) {
+  const year = calDate.getFullYear();
+  const month = calDate.getMonth();
+  const first = new Date(year, month, 1);
+  const days = new Date(year, month + 1, 0).getDate();
+  const start = first.getDay();
+  const map = {};
+  entries.forEach((item) => {
+    const itemKey = key(dOf(item));
+    (map[itemKey] ||= []).push(item);
+  });
+
+  let html = `<div class="mm-i-card"><div class="mm-cal-head"><button id="mm-cprev">‹</button><strong>${calDate.toLocaleString("en-IN", { month: "long", year: "numeric" })}</strong><button id="mm-cnext">›</button></div><div class="mm-cal">`;
+  html += ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((name) => `<div class="mm-cal-name">${name}</div>`).join("");
+  for (let i = 0; i < start; i++) html += '<div class="mm-day empty"></div>';
+  for (let day = 1; day <= days; day++) {
+    const current = new Date(year, month, day);
+    const list = map[key(current)] || [];
+    const mood = list.find((item) => item.mood)?.mood;
+    const today = key(current) === key(new Date());
+    html += `<div class="mm-day ${today ? "today" : ""}"><span class="mm-day-num">${day}</span>${mood ? `<span class="mm-day-mood">${MOODS[mood] || "💜"}</span>` : ""}${list.length ? `<div class="mm-day-count">${list.length} ${list.length === 1 ? "entry" : "entries"}</div>` : ""}</div>`;
+  }
+  html += '</div><p style="color:#887b9d;font-size:12px;margin-bottom:0">Each emoji represents the mood recorded for that day.</p></div>';
+  content.innerHTML = html;
+  modal.querySelector("#mm-cprev").onclick = () => { calDate = new Date(year, month - 1, 1); render(); };
+  modal.querySelector("#mm-cnext").onclick = () => { calDate = new Date(year, month + 1, 1); render(); };
+}
+
+function streak() {
+  const days = [...new Set(entries.map((item) => key(dOf(item))))].sort();
+  let best = 0;
+  let run = 0;
+  for (let i = 0; i < days.length; i++) {
+    if (i && Math.round((new Date(days[i]) - new Date(days[i - 1])) / 86400000) !== 1) run = 0;
+    run += 1;
+    best = Math.max(best, run);
+  }
+  return best;
+}
+
+function growth(content) {
+  const monthMap = {};
+  entries.forEach((item) => {
+    const date = dOf(item);
+    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+    monthMap[monthKey] ||= { date: new Date(date.getFullYear(), date.getMonth(), 1), count: 0, moods: [] };
+    monthMap[monthKey].count += 1;
+    if (item.mood) monthMap[monthKey].moods.push(item.mood);
+  });
+  const months = Object.values(monthMap).sort((a, b) => a.date - b.date).slice(-6);
+  const max = Math.max(...months.map((item) => item.count), 1);
+  const counts = {};
+  entries.forEach((item) => { if (item.mood) counts[item.mood] = (counts[item.mood] || 0) + 1; });
+  const common = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+  content.innerHTML = `
+    <div class="mm-i-card">
+      <h3>🌱 Your Growth Timeline</h3>
+      <p style="color:#887b9d;font-size:13px">See how your journaling habit is building over time.</p>
+      <div class="mm-growth-stats">
+        <div class="mm-stat"><strong>${entries.length}</strong><span>Total entries</span></div>
+        <div class="mm-stat"><strong>${common ? MOODS[common] : "—"}</strong><span>${common ? LABELS[common] : "No mood yet"}</span></div>
+        <div class="mm-stat"><strong>${streak()}</strong><span>Best day streak</span></div>
+      </div>
+      ${months.length ? `<div class="mm-bars">${months.map((item) => `<div class="mm-bar-wrap"><span>${item.moods.length ? MOODS[item.moods[0]] : ""}</span><div class="mm-bar" style="height:${Math.max(8, item.count / max * 155)}px"></div><span class="mm-bar-label">${item.date.toLocaleString("en-IN", { month: "short" })}</span></div>`).join("")}</div>` : ""}
+      <div class="mm-note">${entries.length < 3 ? "Keep writing. Your growth timeline becomes more useful as you build your journal." : `You have ${entries.length} saved entries. Keep checking in with yourself — the changes become clearer over time. 💜`}</div>
+    </div>`;
+}
+
+onAuthStateChanged(auth, async (currentUser) => {
+  user = currentUser;
+  await load();
+  addButton();
+});
+
+new MutationObserver(() => addButton()).observe(document.body, { childList: true, subtree: true });

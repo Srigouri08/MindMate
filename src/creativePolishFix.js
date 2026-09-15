@@ -66,9 +66,11 @@
   function fixAddPhoto() {
     const button = document.querySelector('.mm-toolbar .mm-tool[title="Add photo"]');
     if (!button) return;
-    button.style.setProperty("background", "#f1eaff", "important");
-    button.style.setProperty("background-color", "#f1eaff", "important");
-    button.style.setProperty("color", "#6045a0", "important");
+    const dark = document.querySelector(".app.dark-mode");
+    button.style.setProperty("background", dark ? "#40355a" : "#f1eaff", "important");
+    button.style.setProperty("background-color", dark ? "#40355a" : "#f1eaff", "important");
+    button.style.setProperty("color", dark ? "#eee7ff" : "#6045a0", "important");
+    button.style.setProperty("border-color", dark ? "#514668" : "transparent", "important");
   }
 
   function sync() {

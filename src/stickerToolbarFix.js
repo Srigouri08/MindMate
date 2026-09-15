@@ -12,7 +12,7 @@
         body:has(.app.dark-mode) .mm-toolbar .mm-tool.add { background:#40355a !important; color:#eee7ff !important; border-color:#514668 !important; }
         body:has(.app.dark-mode) .mm-toolbar .mm-tool.add:hover { background:#55466f !important; }
         .book-page .placed-sticker { width:max-content !important; height:max-content !important; }
-        .book-page .placed-sticker .sticker-controls { left:50% !important; top:-48px !important; transform:translateX(-50%) !important; width:max-content !important; }
+        .book-page .placed-sticker .sticker-controls { left:50% !important; top:-48px !important; width:max-content !important; }
         .book-page .placed-sticker { touch-action:none !important; }
       `;
       document.head.appendChild(style);
@@ -25,9 +25,6 @@
       button.click();
       return true;
     }
-
-    // The ribbon button was intentionally removed. The React app can expose
-    // its sticker state through this small event bridge instead.
     window.dispatchEvent(new CustomEvent("mindmate-open-stickers"));
     return true;
   }
@@ -46,6 +43,18 @@
   function isEditableScreen() {
     return [...document.querySelectorAll(".action-row .primary-action")]
       .some((button) => /save (entry|changes)/i.test(button.textContent.trim()));
+  }
+
+  function keepStickerControlsLevel() {
+    document.querySelectorAll(".book-page .placed-sticker").forEach((sticker) => {
+      const controls = sticker.querySelector(".sticker-controls");
+      if (!controls) return;
+      const transform = sticker.style.transform || "";
+      const match = transform.match(/rotate\(\s*(-?[\d.]+)deg\s*\)/i);
+      const rotation = match ? parseFloat(match[1]) || 0 : 0;
+      controls.style.setProperty("transform", `translateX(-50%) rotate(${-rotation}deg)`, "important");
+      controls.style.setProperty("transform-origin", "center center", "important");
+    });
   }
 
   function startDrag(event) {
@@ -75,6 +84,7 @@
     const y = Math.max(5, Math.min(95, drag.startTop + dy));
     drag.sticker.style.left = `${x}%`;
     drag.sticker.style.top = `${y}%`;
+    keepStickerControlsLevel();
   }
 
   function endDrag(event) {
@@ -99,12 +109,17 @@
   function start() {
     install();
     wireStickerTool();
+    keepStickerControlsLevel();
     document.addEventListener("pointerdown", startDrag, true);
     document.addEventListener("pointermove", moveDrag, true);
     document.addEventListener("pointerup", endDrag, true);
     document.addEventListener("pointercancel", endDrag, true);
-    const observer = new MutationObserver(() => requestAnimationFrame(wireStickerTool));
+    const observer = new MutationObserver(() => requestAnimationFrame(() => {
+      wireStickerTool();
+      keepStickerControlsLevel();
+    }));
     observer.observe(document.body, { childList: true, subtree: true });
+    setInterval(keepStickerControlsLevel, 120);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });

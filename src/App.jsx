@@ -260,7 +260,6 @@ function App() {
       <header className="topbar">
         <div className="brand"><div className="brand-icon">♡</div><div><h1>MindMate</h1><span>JOURNAL • REFLECT • GROW</span></div></div>
         <div className="top-actions">
-          {user && <button className={`icon-button ${showStickers ? "active" : ""}`} onClick={(e) => { e.stopPropagation(); setShowStickers(!showStickers); }} title="Add stickers">🎀</button>}
           <button className="icon-button" onClick={() => setDarkMode(!darkMode)} title="Toggle dark mode">{darkMode ? "☀️" : "🌙"}</button>
           {user && <div className="profile-pill"><span>{user.email?.[0]?.toUpperCase() || "S"}</span><strong>{user.email?.split("@")[0]}</strong></div>}
         </div>

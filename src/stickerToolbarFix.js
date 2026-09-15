@@ -1,6 +1,7 @@
 (() => {
   const STYLE_ID = "mindmate-sticker-fix-style";
   let started = false;
+  let toolbarObserver = null;
 
   function installStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -23,13 +24,20 @@
 
   function wireStickerTool() {
     const toolbarButton = document.querySelector('.mm-toolbar .mm-tool[title="Stickers"]');
-    if (!toolbarButton || toolbarButton.dataset.mmStickerWired === "1") return;
-    toolbarButton.dataset.mmStickerWired = "1";
-    toolbarButton.addEventListener("click", (event) => {
+    if (!toolbarButton) return false;
+    if (toolbarButton.dataset.mmStickerWired === "1") return true;
+
+    // Remove the old inline handler from index.html so it cannot open a second
+    // picker or recursively click itself. React owns the actual sticker picker.
+    const cleanButton = toolbarButton.cloneNode(true);
+    toolbarButton.replaceWith(cleanButton);
+    cleanButton.dataset.mmStickerWired = "1";
+    cleanButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       openReactStickerPicker();
     });
+    return true;
   }
 
   function keepControlsLevel(sticker) {
@@ -50,7 +58,17 @@
     if (started) return;
     started = true;
     installStyles();
-    wireStickerTool();
+    if (!wireStickerTool()) {
+      // The toolbar is created by the static page script. Watch only until its
+      // sticker button exists, then disconnect so this cannot become a hot path.
+      toolbarObserver = new MutationObserver(() => {
+        if (wireStickerTool() && toolbarObserver) {
+          toolbarObserver.disconnect();
+          toolbarObserver = null;
+        }
+      });
+      toolbarObserver.observe(document.body, { childList:true, subtree:true });
+    }
 
     // React owns sticker dragging now. We deliberately do not attach a global
     // pointermove handler here; that was causing lag and fighting React state.
@@ -60,7 +78,6 @@
       requestAnimationFrame(syncSelectedStickerControls);
     }, { passive:true });
 
-    // Give React one frame to render the controls after a sticker is selected.
     document.addEventListener("pointerup", (event) => {
       if (event.target.closest?.(".placed-sticker")) requestAnimationFrame(syncSelectedStickerControls);
     }, { passive:true });

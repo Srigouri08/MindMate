@@ -1,0 +1,106 @@
+/* Dark-mode theme for the floating MindMate toolbar.
+   The toolbar is created directly under <body>, so .dark-mode alone
+   cannot reach it. :has() lets us detect the dark app safely. */
+body:has(.app.dark-mode) .mm-toolbar {
+  background: rgba(38, 33, 53, .96) !important;
+  border-color: #514668 !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, .42) !important;
+}
+
+body:has(.app.dark-mode) .mm-tool {
+  background: #3a3150 !important;
+  color: #eee7fa !important;
+}
+
+body:has(.app.dark-mode) .mm-tool:hover {
+  background: #514268 !important;
+}
+
+body:has(.app.dark-mode) .mm-tool.add {
+  background: #7658c8 !important;
+  color: #fff !important;
+}
+
+/* The panels opened from the floating toolbar */
+body:has(.app.dark-mode) .mm-panel {
+  background: #262135 !important;
+  border-color: #514668 !important;
+  color: #eee7fa !important;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, .48) !important;
+}
+
+body:has(.app.dark-mode) .mm-panel p {
+  color: #aaa0b9 !important;
+}
+
+body:has(.app.dark-mode) .mm-close {
+  color: #cfc5df !important;
+}
+
+body:has(.app.dark-mode) .mm-choice {
+  background: #342d45 !important;
+  border-color: #4c4261 !important;
+  color: #eee7fa !important;
+}
+
+body:has(.app.dark-mode) .mm-choice:hover,
+body:has(.app.dark-mode) .mm-choice.active {
+  background: #46385e !important;
+  border-color: #7658c8 !important;
+}
+
+body:has(.app.dark-mode) .mm-input {
+  background: #29243a !important;
+  border-color: #4b4260 !important;
+  color: #eee7fa !important;
+}
+
+body:has(.app.dark-mode) .mm-input::placeholder {
+  color: #81778e !important;
+}
+
+body:has(.app.dark-mode) .mm-template-card {
+  border-color: #514668 !important;
+}
+
+body:has(.app.dark-mode) .mm-doodle-bar {
+  background: #29243a !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .42) !important;
+}
+
+body:has(.app.dark-mode) .mm-doodle-bar button {
+  background: #41365a !important;
+  color: #eee7fa !important;
+}
+
+/* Login card is inside .app, but its base CSS has a light background.
+   Override only the visual colors in dark mode; authentication logic is untouched. */
+.app.dark-mode .login-card {
+  background: rgba(38, 33, 53, .96) !important;
+  border-color: #514668 !important;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, .42) !important;
+  color: #eee7fa !important;
+}
+
+.app.dark-mode .login-card h2 {
+  color: #eee7fa !important;
+}
+
+.app.dark-mode .login-card .login-subtitle,
+.app.dark-mode .login-card .switch {
+  color: #aaa0b9 !important;
+}
+
+.app.dark-mode .login-card .link-button {
+  color: #a88be8 !important;
+}
+
+.app.dark-mode .login-card input {
+  background: #29243a !important;
+  border-color: #4b4260 !important;
+  color: #eee7fa !important;
+}
+
+.app.dark-mode .login-card input::placeholder {
+  color: #81778e !important;
+}

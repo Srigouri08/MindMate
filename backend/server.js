@@ -32,16 +32,13 @@ app.post("/analyze", async (req, res) => {
     const { text } = req.body;
 
     if (!text) {
-      return res.status(400).json({
-        error: "Journal entry is empty.",
-      });
+      return res.status(400).json({ error: "Journal entry is empty." });
     }
 
     console.log("🤖 Sending journal entry to Gemini...");
 
     const interaction = await ai.interactions.create({
       model: "gemini-3.8-flash",
-
       input: `
 You are MindMate, an empathetic AI journal assistant.
 
@@ -75,31 +72,65 @@ IMPORTANT:
 Journal entry:
 ${text}
 `,
-
-      generation_config: {
-        thinking_level: "low",
-      },
+      generation_config: { thinking_level: "low" },
     });
 
     console.log("✅ Gemini responded!");
 
-    // Extra safety: remove Markdown characters if Gemini adds them anyway.
     const cleanAnalysis = interaction.output_text
       .replace(/\\\*/g, "")
       .replace(/\*/g, "")
       .replace(/#{1,6}\s*/g, "")
       .trim();
 
-    res.json({
-      analysis: cleanAnalysis,
-    });
-
+    res.json({ analysis: cleanAnalysis });
   } catch (error) {
     console.error("❌ Gemini error:", error);
+    res.status(500).json({ error: "Gemini could not analyze the journal entry." });
+  }
+});
 
-    res.status(500).json({
-      error: "Gemini could not analyze the journal entry.",
+app.post("/ask", async (req, res) => {
+  try {
+    const { question, entries } = req.body;
+
+    if (!question?.trim()) {
+      return res.status(400).json({ error: "Please enter a question." });
+    }
+
+    const safeEntries = Array.isArray(entries) ? entries.slice(0, 30) : [];
+    const journalContext = safeEntries.length
+      ? safeEntries.map((item, index) => {
+          const date = item.date || "Unknown date";
+          const mood = item.mood || "Not recorded";
+          return `Entry ${index + 1} (${date}, mood: ${mood}):\n${String(item.text || "").slice(0, 2500)}`;
+        }).join("\n\n")
+      : "No journal entries are available yet.";
+
+    console.log("🧠 Answering a MindMate question...");
+
+    const interaction = await ai.interactions.create({
+      model: "gemini-3.8-flash",
+      input: `
+You are MindMate, a warm and thoughtful AI journal companion.
+
+Answer the user's question using only the journal context provided below when the question asks about their journal, moods, patterns, memories, or personal experiences.
+
+Be supportive, honest, concise, and specific. Do not diagnose mental-health conditions. If the journal does not contain enough information, say so rather than inventing details.
+
+User question:
+${question.trim()}
+
+Private journal context:
+${journalContext}
+`,
+      generation_config: { thinking_level: "low" },
     });
+
+    res.json({ answer: interaction.output_text.trim() });
+  } catch (error) {
+    console.error("❌ Ask MindMate error:", error);
+    res.status(500).json({ error: "MindMate could not answer right now." });
   }
 });
 

@@ -1,0 +1,120 @@
+/* MindMate responsive + floating-toolbar fixes */
+
+/* The creative toolbar is injected outside React's root. It should never cover auth. */
+body:has(.login-layout) .mm-toolbar,
+body:has(.login-layout) .mm-panel,
+body:has(.login-layout) .mm-memory-overlay,
+body:has(.login-layout) .mm-doodle {
+  display: none !important;
+}
+
+html, body, #root { width: 100%; min-height: 100%; }
+body { overflow-x: hidden; }
+
+.topbar { width: 100%; }
+.main-content { width: 100%; }
+.welcome-row > div:first-child { min-width: 0; }
+.quote-card { max-width: 320px; }
+
+/* Keep floating tools from covering the page on normal screens. */
+.mm-toolbar { max-height: calc(100vh - 32px); }
+.mm-panel { max-width: calc(100vw - 100px); }
+
+/* Tablet */
+@media (max-width: 900px) {
+  .topbar { height: auto; min-height: 88px; padding: 14px 20px; }
+  .brand { min-width: 0; }
+  .brand h1 { font-size: 28px; }
+  .brand span { letter-spacing: 2px; }
+  .workspace { min-height: calc(100vh - 88px); }
+  .sidebar { width: 190px; padding: 24px 10px; }
+  .main-content { padding: 30px 24px 55px; }
+  .welcome-row { align-items: flex-start; }
+  .book-page { padding-left: 58px; padding-right: 30px; }
+  .margin-line { left: 58px; }
+  .sticker-panel { right: 12px; width: min(350px, calc(100vw - 40px)); }
+  .action-row.three-actions { grid-template-columns: 1fr; }
+}
+
+/* Phone */
+@media (max-width: 700px) {
+  .topbar { padding: 12px 14px; gap: 10px; }
+  .brand { gap: 9px; }
+  .brand-icon { width: 48px; height: 48px; border-radius: 15px; }
+  .brand h1 { font-size: 23px; letter-spacing: -.5px; }
+  .brand span { font-size: 7px; letter-spacing: 1.8px; }
+  .top-actions { gap: 6px; }
+  .icon-button { width: 42px; height: 42px; border-radius: 13px; font-size: 19px; }
+  .profile-pill { max-width: 125px; padding-right: 8px; }
+  .profile-pill strong { max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .workspace { display: block; min-height: 0; }
+  .sidebar { width: 100%; height: auto; padding: 9px 10px; border-right: 0; border-bottom: 1px solid #ded4f1; flex-direction: row; align-items: center; gap: 6px; overflow-x: auto; }
+  .side-item, .side-logout { flex: 0 0 auto; width: auto; margin: 0; padding: 10px 12px; white-space: nowrap; font-size: 13px; }
+  .side-item span, .side-logout span { width: auto; margin-right: 4px; font-size: 16px; }
+  .sidebar-bottom { margin: 0; display: flex; gap: 6px; }
+  .main-content { padding: 22px 14px 45px; }
+
+  .welcome-row { display: block; margin-bottom: 18px; }
+  .welcome-row h2, .section-intro h2 { font-size: 25px; line-height: 1.2; }
+  .welcome-row p:not(.eyebrow), .section-intro > p:not(.eyebrow) { line-height: 1.45; }
+  .quote-card { width: 100%; max-width: none; min-width: 0; margin-top: 14px; }
+
+  .mindmate-feature-row { gap: 12px; }
+  .checkin-card, .insights-card { padding: 16px; border-radius: 17px; }
+  .mood-buttons { gap: 6px; }
+  .mood-button { flex: 1 1 70px; justify-content: center; }
+
+  .book-shell { padding: 8px 8px 10px 34px; border-radius: 21px; }
+  .book-spine { left: 5px; top: 20px; bottom: 20px; width: 25px; font-size: 20px; }
+  .book-page { min-height: 500px; padding: 24px 20px 40px 42px; border-radius: 4px 17px 17px 4px; }
+  .margin-line { left: 42px; }
+  .book-page-top { gap: 10px; }
+  .book-title { max-width: 65%; padding: 7px 12px; font-size: 18px; }
+  .today-date { font-size: 11px; white-space: normal; text-align: right; }
+  .book-page textarea { height: 330px; font-size: 16px; line-height: 31px; }
+  .book-hint { right: 16px; bottom: 14px; font-size: 11px; }
+
+  .sticker-panel { position: fixed; top: auto; right: 10px; bottom: 72px; width: calc(100vw - 20px); max-width: none; max-height: 62vh; }
+  .sticker-grid { grid-template-columns: repeat(5, 1fr); }
+
+  .action-row, .action-row.three-actions { grid-template-columns: 1fr; gap: 9px; }
+  .action-row { margin-top: 15px; }
+  .action-row button { width: 100%; }
+
+  .journal-list-screen { max-width: none; }
+  .date-entry { align-items: flex-start; flex-wrap: wrap; gap: 10px; padding: 14px; }
+  .date-entry-icon { width: 40px; height: 40px; flex-basis: 40px; font-size: 18px; }
+  .date-entry-info { flex: 1 1 calc(100% - 55px); }
+  .date-entry-info span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .view-entry-button { margin-left: 50px; }
+
+  /* Move the global creative toolbar to a compact bottom dock on phones. */
+  .mm-toolbar { left: 50% !important; right: auto !important; top: auto !important; bottom: 12px !important; transform: translateX(-50%) !important; flex-direction: row !important; gap: 5px !important; padding: 6px !important; border-radius: 16px !important; max-width: calc(100vw - 24px); }
+  .mm-tool { width: 40px !important; height: 40px !important; flex: 0 0 40px; }
+  .mm-panel { left: 10px !important; right: 10px !important; top: auto !important; bottom: 66px !important; transform: none !important; width: auto !important; max-width: none !important; max-height: 70vh !important; }
+  .mm-memory { width: calc(100vw - 24px); padding: 16px; }
+  .mm-slide { min-height: 280px; }
+  .mm-slide img { max-width: 96%; max-height: 320px; }
+}
+
+/* Small phones */
+@media (max-width: 420px) {
+  .topbar { align-items: center; }
+  .brand-icon { width: 42px; height: 42px; }
+  .brand h1 { font-size: 20px; }
+  .brand span { display: none; }
+  .profile-pill { max-width: 105px; }
+  .profile-pill span { width: 27px; height: 27px; }
+  .profile-pill strong { max-width: 55px; font-size: 12px; }
+  .main-content { padding-left: 10px; padding-right: 10px; }
+  .book-page { padding-left: 36px; padding-right: 14px; }
+  .margin-line { left: 36px; }
+  .book-title { font-size: 16px; max-width: 62%; }
+  .book-page textarea { height: 300px; font-size: 15px; line-height: 29px; }
+  .side-item, .side-logout { padding: 9px 10px; font-size: 12px; }
+  .mm-tool { width: 37px !important; height: 37px !important; flex-basis: 37px; font-size: 18px !important; }
+}
+
+/* Prevent accidental horizontal overflow from any creative element. */
+img, video, canvas { max-width: 100%; }

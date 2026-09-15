@@ -45,23 +45,32 @@ app.post("/analyze", async (req, res) => {
       input: `
 You are MindMate, an empathetic AI journal assistant.
 
-Analyze this journal entry.
+Analyze the journal entry below.
 
-Give:
+Return EXACTLY these four sections:
 
 Mood:
-The main mood in one short sentence.
+Write one short sentence describing the main mood.
 
 Summary:
-A short summary.
+Write a short summary of the journal entry.
 
 Main topics:
-List 2 or 3 important topics.
+Write 2 or 3 topics separated by commas.
 
 Helpful suggestion:
 Give one simple supportive suggestion.
 
-Keep the response short and friendly.
+IMPORTANT:
+- Use plain text only.
+- Do NOT use Markdown.
+- Do NOT use asterisks.
+- Do NOT use hashtags.
+- Do NOT use bullet points.
+- Do NOT add emojis.
+- Do NOT put any section inside bold formatting.
+- Do NOT add any introduction or conclusion.
+- Use exactly the section names shown above.
 
 Journal entry:
 ${text}
@@ -74,8 +83,15 @@ ${text}
 
     console.log("✅ Gemini responded!");
 
+    // Extra safety: remove Markdown characters if Gemini adds them anyway.
+    const cleanAnalysis = interaction.output_text
+      .replace(/\\\*/g, "")
+      .replace(/\*/g, "")
+      .replace(/#{1,6}\s*/g, "")
+      .trim();
+
     res.json({
-      analysis: interaction.output_text,
+      analysis: cleanAnalysis,
     });
 
   } catch (error) {

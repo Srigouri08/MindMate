@@ -148,19 +148,20 @@ function App() {
 
   function startStickerDrag(event, sticker) {
     if (screen === "view" || !bookRef.current) return;
-    event.stopPropagation(); setSelectedStickerId(sticker.id);
-    const rect = bookRef.current.getBoundingClientRect();
-    dragRef.current = { id: sticker.id, offsetX: event.clientX - (rect.left + (sticker.x / 100) * rect.width), offsetY: event.clientY - (rect.top + (sticker.y / 100) * rect.height) };
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedStickerId(sticker.id);
+    dragRef.current = { id: sticker.id };
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
   function moveSticker(event) {
     if (!dragRef.current || !bookRef.current) return;
+    event.preventDefault();
     const rect = bookRef.current.getBoundingClientRect();
-    const drag = dragRef.current;
-    const x = ((event.clientX - rect.left - drag.offsetX) / rect.width) * 100;
-    const y = ((event.clientY - rect.top - drag.offsetY) / rect.height) * 100;
-    setPageStickers((current) => current.map((sticker) => sticker.id === drag.id ? { ...sticker, x: Math.max(5, Math.min(94, x)), y: Math.max(7, Math.min(88, y)) } : sticker));
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    setPageStickers((current) => current.map((sticker) => sticker.id === dragRef.current.id ? { ...sticker, x: Math.max(3, Math.min(97, x)), y: Math.max(4, Math.min(96, y)) } : sticker));
   }
 
   function stopStickerDrag() { dragRef.current = null; }
@@ -285,7 +286,7 @@ function App() {
 
                 {!isViewScreen && screen !== "edit" && <div className="mindmate-feature-row">
                   <section className="checkin-card"><h3>How are you feeling today? 💜</h3><p className="feature-subtitle">A tiny check-in before you write.</p><div className="mood-buttons">{moods.map((mood) => <button key={mood.key} className={`mood-button ${todayMood === mood.key ? "selected" : ""}`} onClick={() => chooseMood(mood)}><span>{mood.emoji}</span><small>{mood.label}</small></button>)}</div></section>
-                  <section className="insights-card"><h3>Your recent mood 🌱</h3>{insights.count === 0 && !insightMood ? <p className="feature-empty">Your mood insights will appear after you save a few check-ins.</p> : <><div className="insight-main"><span className="insight-emoji">{insightMood?.emoji || "💜"}</span><div><div className="insight-label">Most common recently</div><div className="insight-value">{insightMood?.label || "Feeling"}</div></div></div><div className="insight-label">Things on your mind</div><div className="topic-pills">{insights.topics.map((topic) => <span className="topic-pill" key={topic}>{topic}</span>)}</div></>}</section>
+                  <section className="insights-card"><h3>Your recent mood 🌱</h3>{insights.count === 0 && !insightMood ? <p className="feature-empty">Your mood insights will appear after you save a few check-ins.</p> : <><div className="insight-main"><span className="insight-emoji">{insightMood?.emoji || "💜"}</span><div><div className="insight-label">Most common recently</div><div className="insight-value">{insightMood?.label || "Feeling"}</div></div></div><div className="insight-label">Things on your mind</div><div className="topic-pills">{insights.topics.map((topic) => <span className="topic-pill" key={topic}>{topic}</span>)}</div></div>}</section>
                 </div>}
 
                 <div className="book-area"><div className="book-shell"><div className="book-spine"><span>◦</span><span>◦</span><span>◦</span><span>◦</span><span>◦</span></div><div className="book-page" ref={bookRef} onClick={() => setSelectedStickerId(null)}><div className="book-page-top"><div className="book-title">Dear Journal,</div><div className="today-date">{formatDateTime(displayedDate)}</div></div><div className="margin-line" /><textarea value={entry} onChange={(e) => isEditable && setEntry(e.target.value)} readOnly={!isEditable} placeholder="Write about your day..." />
@@ -294,7 +295,7 @@ function App() {
                   {showStickers && isEditable && <div className="sticker-panel" onClick={(e) => e.stopPropagation()}><div className="sticker-panel-title"><div><strong>Stickers ✨</strong><small>Make your page yours</small></div><button className="close-stickers" onClick={() => setShowStickers(false)}>×</button></div><div className="sticker-tabs">{categories.map((category) => <button key={category} className={stickerCategory === category ? "active" : ""} onClick={() => setStickerCategory(category)}>{category}</button>)}</div><div className="sticker-grid">{stickerSets[stickerCategory].map((sticker, index) => <button key={`${sticker}-${index}`} className="sticker-choice" onClick={() => addSticker(sticker)}>{sticker}</button>)}</div><p className="sticker-help">Click to add. Drag to move. Select a sticker for resize, rotate and remove.</p></div>}
                 </div></div>
 
-                {isViewScreen ? <div className="action-row three-actions"><button className="secondary-action" onClick={() => editEntry(selectedEntry)}>✎ Edit Entry</button><button className="primary-action" onClick={openJournal}>← My Journal</button><button className="danger-action" onClick={() => deleteEntry(selectedEntry)}>🗑 Delete</button></div> : <><div className="action-row"><button className="secondary-action" onClick={analyzeEntry}>✨ Analyze with AI</button><button className="primary-action" onClick={saveEntry}>{screen === "edit" ? "💾 Save Changes" : "💾 Save Entry"}</button></div>{screen === "edit" && <button className="cancel-edit" onClick={() => viewEntry(selectedEntry)}>Cancel editing</button>}{loading && <p className="message">🤖 Gemini is thinking...</p>}{message && <p className="message">{message}</p>}{analysis && <div className="analysis"><h3>🤖 AI Analysis</h3>{(() => { const result = formatAnalysis(analysis); return <><div className="analysis-section"><h4>😊 Mood</h4><p>{result.mood}</p></div><div className="analysis-section"><h4>📝 Summary</h4><p>{result.summary}</p></div><div className="analysis-section"><h4>📌 Main Topics</h4><p>{result.topics}</p></div><div className="analysis-section"><h4>💡 Helpful Suggestion</h4><p>{result.suggestion}</p></div></>; })()}</div>}</>}
+                {isViewScreen ? <div className="action-row three-actions"><button className="secondary-action" onClick={() => editEntry(selectedEntry)}>✎ Edit Entry</button><button className="primary-action" onClick={openJournal}>← My Journal</button><button className="danger-action" onClick={() => deleteEntry(selectedEntry)}>🗑 Delete</button></div> : <><div className="action-row"><button className="secondary-action" onClick={analyzeEntry}>✨ Analyze with AI</button><button className="primary-action" onClick={saveEntry}>{screen === "edit" ? "💾 Save Changes" : "💾 Save Entry"}</button></div>{screen === "edit" && <button className="cancel-edit" onClick={() => viewEntry(selectedEntry)}>Cancel editing</button>}{loading && <p className="message">🤖 Gemini is thinking...</p>}{message && <p className="message">{message}</p>}{analysis && <div className="analysis"><h3>🤖 AI Analysis</h3>{(() => { const result = formatAnalysis(analysis); return <><div className="analysis-section"><h4>😊 Mood</h4><p>{result.mood}</p></div><div className="analysis-section"><h4>📝 Summary</h4><p>{result.summary}</p></div><div className="analysis-section"><h4>📌 Main Topics</h4><p>{result.topics}</p></div><div className="analysis-section"><h4>💡 Helpful Suggestion</h4><p>{result.suggestion}</p></div></>; })()}</div></div>}</>}
               </>
             )}
           </main>

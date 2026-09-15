@@ -1,0 +1,95 @@
+/* MindMate - final responsive/mobile layout fixes */
+
+/* The injected creative toolbar is allowed ONLY on the New Entry screen. */
+.mm-toolbar { display: none !important; }
+body.mindmate-new-entry .mm-toolbar { display: flex !important; }
+
+html, body, #root { width: 100%; min-width: 0; }
+body { overflow-x: hidden; }
+
+/* Make the journal page a real positioning canvas for stickers. */
+.book-page { position: relative !important; overflow: hidden !important; }
+.placed-sticker { position: absolute !important; touch-action: none !important; user-select: none !important; -webkit-user-select: none !important; cursor: grab !important; z-index: 20 !important; }
+.placed-sticker:active { cursor: grabbing !important; }
+
+@media (max-width: 900px) {
+  .topbar { height: auto !important; min-height: 88px; padding: 14px 20px !important; }
+  .workspace { min-height: calc(100vh - 88px) !important; }
+  .sidebar { width: 190px !important; flex: 0 0 190px; padding: 24px 10px !important; }
+  .main-content { min-width: 0 !important; width: 100% !important; padding: 30px 24px 90px !important; }
+  .welcome-row { min-width: 0; }
+  .welcome-row > div:first-child { min-width: 0; }
+  .quote-card { max-width: 320px; }
+}
+
+@media (max-width: 700px) {
+  .topbar { padding: 12px 14px !important; gap: 10px; }
+  .brand { min-width: 0; gap: 9px; }
+  .brand-icon { width: 48px !important; height: 48px !important; }
+  .brand h1 { font-size: 23px !important; letter-spacing: -.5px; }
+  .brand span { font-size: 7px; letter-spacing: 1.8px; }
+  .top-actions { gap: 6px; min-width: 0; }
+  .icon-button { width: 42px !important; height: 42px !important; border-radius: 13px; font-size: 19px; }
+  .profile-pill { max-width: 125px; }
+  .profile-pill strong { max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .workspace { display: block !important; min-height: 0 !important; }
+  .sidebar { width: 100% !important; height: auto !important; flex: none !important; padding: 9px 10px !important; border-right: 0 !important; border-bottom: 1px solid #ded4f1; flex-direction: row !important; align-items: center; gap: 6px; overflow-x: auto; overflow-y: hidden; }
+  .side-item, .side-logout { flex: 0 0 auto !important; width: auto !important; margin: 0 !important; padding: 10px 12px !important; white-space: nowrap; font-size: 13px !important; }
+  .side-item span, .side-logout span { width: auto !important; margin-right: 4px; font-size: 16px !important; }
+  .sidebar-bottom { margin: 0 !important; display: flex; gap: 6px; }
+  .main-content { width: 100% !important; max-width: none !important; min-width: 0 !important; padding: 22px 14px 110px !important; overflow: visible !important; }
+
+  .welcome-row { display: block !important; margin-bottom: 18px !important; }
+  .welcome-row h2, .section-intro h2 { font-size: 25px !important; line-height: 1.2; }
+  .quote-card { width: 100% !important; max-width: none !important; min-width: 0 !important; margin-top: 14px; }
+  .mindmate-feature-row { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .checkin-card, .insights-card { padding: 16px !important; border-radius: 17px; min-width: 0; }
+  .mood-buttons { gap: 6px; }
+  .mood-button { flex: 1 1 70px; justify-content: center; }
+
+  .book-area { width: 100% !important; min-width: 0 !important; }
+  .book-shell { width: 100% !important; padding: 8px 8px 10px 34px !important; border-radius: 21px; }
+  .book-page { width: 100% !important; min-height: 560px !important; padding: 24px 20px 40px 42px !important; border-radius: 4px 17px 17px 4px; }
+  .book-spine { left: 5px !important; top: 20px; bottom: 20px; width: 25px; font-size: 20px; }
+  .margin-line { left: 42px !important; }
+  .book-page-top { gap: 10px; }
+  .book-title { max-width: 65%; padding: 7px 12px; font-size: 18px; }
+  .today-date { font-size: 11px; white-space: normal; text-align: right; }
+  .book-page textarea { height: 380px !important; min-height: 380px !important; font-size: 16px; line-height: 31px; }
+  .book-hint { right: 16px; bottom: 14px; font-size: 11px; }
+
+  .sticker-panel { position: absolute !important; top: 72px !important; right: 10px !important; left: 10px !important; width: auto !important; max-width: none !important; max-height: 58vh !important; }
+  .sticker-grid { grid-template-columns: repeat(5, 1fr) !important; }
+
+  .action-row, .action-row.three-actions { grid-template-columns: 1fr !important; gap: 9px !important; }
+  .action-row button { width: 100% !important; }
+
+  .journal-list-screen { width: 100% !important; max-width: none !important; }
+  .date-entry { align-items: flex-start; flex-wrap: wrap; gap: 10px; padding: 14px; }
+  .date-entry-icon { width: 40px; height: 40px; flex-basis: 40px; font-size: 18px; }
+  .date-entry-info { flex: 1 1 calc(100% - 55px); min-width: 0; }
+  .date-entry-info span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .view-entry-button { margin-left: 50px; }
+
+  .mm-toolbar { left: 50% !important; right: auto !important; top: auto !important; bottom: 12px !important; transform: translateX(-50%) !important; flex-direction: row !important; gap: 5px !important; padding: 6px !important; border-radius: 16px !important; max-width: calc(100vw - 24px) !important; z-index: 9997 !important; }
+  .mm-tool { width: 40px !important; height: 40px !important; flex: 0 0 40px !important; }
+  .mm-panel { left: 10px !important; right: 10px !important; top: auto !important; bottom: 66px !important; transform: none !important; width: auto !important; max-width: none !important; max-height: 70vh !important; }
+}
+
+@media (max-width: 420px) {
+  .brand-icon { width: 42px !important; height: 42px !important; }
+  .brand h1 { font-size: 20px !important; }
+  .brand span { display: none; }
+  .profile-pill { max-width: 105px; }
+  .profile-pill strong { max-width: 55px; font-size: 12px; }
+  .main-content { padding-left: 10px !important; padding-right: 10px !important; }
+  .book-page { min-height: 520px !important; padding-left: 36px !important; padding-right: 14px !important; }
+  .margin-line { left: 36px !important; }
+  .book-title { font-size: 16px; max-width: 62%; }
+  .book-page textarea { height: 350px !important; min-height: 350px !important; font-size: 15px; line-height: 29px; }
+  .side-item, .side-logout { padding: 9px 10px !important; font-size: 12px !important; }
+  .mm-tool { width: 37px !important; height: 37px !important; flex-basis: 37px !important; font-size: 18px !important; }
+}
+
+img, video, canvas { max-width: 100%; }

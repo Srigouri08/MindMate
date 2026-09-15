@@ -37,7 +37,13 @@
     }, true);
   }
 
+  function isEditableScreen() {
+    return [...document.querySelectorAll(".action-row .primary-action")]
+      .some((button) => /save (entry|changes)/i.test(button.textContent.trim()));
+  }
+
   function startDrag(event) {
+    if (!isEditableScreen()) return;
     const sticker = event.target.closest?.(".placed-sticker");
     if (!sticker || event.target.closest?.(".sticker-controls")) return;
     const page = sticker.closest(".book-page");

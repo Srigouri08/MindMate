@@ -58,7 +58,16 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => setUser(currentUser));
     return unsubscribe;
   }, []);
+   useEffect(() => {
+  const openStickers = () => {
+    if (screen === "new" || screen === "edit") {
+      setShowStickers(true);
+    }
+  };
 
+  window.addEventListener("mindmate-open-stickers", openStickers);
+  return () => window.removeEventListener("mindmate-open-stickers", openStickers);
+}, [screen]);
   useEffect(() => {
     if (!user) {
       setEntries([]);

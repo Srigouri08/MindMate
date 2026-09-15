@@ -1,6 +1,7 @@
 (() => {
   const STYLE_ID = "mindmate-journal-enhancements-style";
   let started = false;
+  let toolbarObserver = null;
 
   function installStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -17,6 +18,8 @@
       body:has(.app.dark-mode) .book-page.mm-template-dreamy textarea { color:#eee9ff !important; caret-color:#eee9ff !important; }
       body:has(.app.dark-mode) .book-page.mm-template-nature textarea { color:#e5f4df !important; caret-color:#e5f4df !important; }
       body:has(.app.dark-mode) .book-page.mm-template-cute textarea { color:#ffe8ef !important; caret-color:#ffe8ef !important; }
+      body:has(.app.dark-mode) .book-page.mm-template-night textarea { color:#f2edf8 !important; caret-color:#f2edf8 !important; }
+      body:has(.app.dark-mode) .book-page.mm-template-minimal textarea { color:#eee9f5 !important; caret-color:#eee9f5 !important; }
       .mm-toolbar .mm-font-color-tool { display:none; position:relative; }
       body.mindmate-new-entry .mm-toolbar .mm-font-color-tool { display:flex; align-items:center; justify-content:center; }
       .mm-toolbar .mm-font-color-letter { display:flex; align-items:center; justify-content:center; width:100%; height:100%; font:700 21px Georgia,serif; line-height:1; color:currentColor; position:relative; pointer-events:none; }
@@ -56,9 +59,10 @@
   }
 
   function createColorPicker() {
-    if (document.querySelector(".mm-font-color-tool")) return;
+    if (document.querySelector(".mm-font-color-tool")) return true;
     const toolbar = document.querySelector(".mm-toolbar");
-    if (!toolbar) return;
+    if (!toolbar) return false;
+
     const button = document.createElement("button");
     button.className = "mm-tool mm-font-color-tool";
     button.title = "Font color";
@@ -98,13 +102,25 @@
     document.addEventListener("click", (event) => {
       if (!popover.contains(event.target) && !button.contains(event.target)) closePopover();
     });
+    applyColor(input.value);
+    return true;
   }
 
   function start() {
     if (started) return;
     started = true;
     installStyles();
-    createColorPicker();
+    if (createColorPicker()) return;
+
+    // The toolbar is created by the static page script after the React app starts.
+    // Wait only until that one element appears, then disconnect immediately.
+    toolbarObserver = new MutationObserver(() => {
+      if (createColorPicker() && toolbarObserver) {
+        toolbarObserver.disconnect();
+        toolbarObserver = null;
+      }
+    });
+    toolbarObserver.observe(document.body, { childList:true, subtree:true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once:true });

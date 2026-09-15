@@ -21,8 +21,14 @@
 
   function openReactStickerPicker() {
     const button = document.querySelector('.top-actions .icon-button[title="Add stickers"]');
-    if (!button) return false;
-    button.click();
+    if (button) {
+      button.click();
+      return true;
+    }
+
+    // The ribbon button was intentionally removed. The React app can expose
+    // its sticker state through this small event bridge instead.
+    window.dispatchEvent(new CustomEvent("mindmate-open-stickers"));
     return true;
   }
 

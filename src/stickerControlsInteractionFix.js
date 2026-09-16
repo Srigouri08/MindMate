@@ -51,6 +51,7 @@
       #${STICKER_TOOLBAR_ID} button:hover { background: #5a477d !important; }
       #${STICKER_TOOLBAR_ID} .remove-sticker { background: #70415d !important; }
 
+      /* Doodle is a child of .book-page, so .book-page overflow:hidden is the hard boundary. */
       #${DOODLE_ID} {
         position: absolute !important;
         inset: 0 !important;
@@ -104,15 +105,31 @@
 
   function positionStickerToolbar(toolbar, sticker) {
     if (!toolbar?.isConnected || !sticker?.isConnected) return;
+    const page = sticker.closest(".book-page");
+    const pageRect = page?.getBoundingClientRect();
     const rect = sticker.getBoundingClientRect();
     const toolbarWidth = toolbar.offsetWidth || 190;
     const toolbarHeight = toolbar.offsetHeight || 44;
-    const gap = 10;
-    let left = rect.left + rect.width / 2;
-    let top = rect.top - toolbarHeight - gap;
-    if (top < 8) top = rect.bottom + gap;
+    const gap = 14;
+
+    // Use the sticker's layout box, not its transformed bounding box. Rotation
+    // changes getBoundingClientRect().height/top and made the toolbar bounce.
+    const leftAnchor = pageRect
+      ? pageRect.left + sticker.offsetLeft
+      : rect.left + rect.width / 2;
+    const topAnchor = pageRect
+      ? pageRect.top + sticker.offsetTop - sticker.offsetHeight / 2
+      : rect.top;
+    const bottomAnchor = pageRect
+      ? pageRect.top + sticker.offsetTop + sticker.offsetHeight / 2
+      : rect.bottom;
+
+    let left = leftAnchor;
+    let top = topAnchor - toolbarHeight - gap;
+    if (top < 8) top = bottomAnchor + gap;
     left = Math.max(toolbarWidth / 2 + 8, Math.min(window.innerWidth - toolbarWidth / 2 - 8, left));
     top = Math.max(8, Math.min(window.innerHeight - toolbarHeight - 8, top));
+
     toolbar.style.left = `${left}px`;
     toolbar.style.top = `${top}px`;
   }

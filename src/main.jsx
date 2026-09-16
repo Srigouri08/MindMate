@@ -12,6 +12,7 @@ import './creativeToolsFix.js'
 import './creativePolishFix.js'
 import './mindmate-screen-toolbar.js'
 import './journalEnhancements.js'
+import './stickerControlsInteractionFix.js'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

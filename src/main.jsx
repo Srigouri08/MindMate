@@ -10,6 +10,7 @@ import "./stickerToolbarFix.js";
 import "./stickerControlsInteractionFix.js";
 import "./creativeToolsFix.js";
 import "./creativePolishFix.js";
+import "./journalEnhancements.js";
 import "./hydrationCard.js";
 import "./sidebarFeatures.js";
 import App from "./App.jsx";

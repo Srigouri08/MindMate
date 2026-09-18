@@ -42,6 +42,7 @@ function App() {
   const [showStickers, setShowStickers] = useState(false);
   const [stickerCategory, setStickerCategory] = useState("All");
   const [pageStickers, setPageStickers] = useState([]);
+  const [doodleData, setDoodleData] = useState("");
   const [selectedStickerId, setSelectedStickerId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [screen, setScreen] = useState("new");
@@ -68,6 +69,13 @@ function App() {
   window.addEventListener("mindmate-open-stickers", openStickers);
   return () => window.removeEventListener("mindmate-open-stickers", openStickers);
 }, [screen]);
+  useEffect(() => {
+    // The doodle overlay lives outside React; it hands over the finished
+    // drawing when the user clicks Done (see stickerControlsInteractionFix.js).
+    const saveDoodle = (event) => setDoodleData(event.detail?.dataUrl || "");
+    window.addEventListener("mindmate-doodle-data", saveDoodle);
+    return () => window.removeEventListener("mindmate-doodle-data", saveDoodle);
+  }, []);
   useEffect(() => {
     if (!user) {
       setEntries([]);
@@ -102,7 +110,7 @@ function App() {
   }
 
   function startNewEntry() {
-    setScreen("new"); setSelectedEntry(null); setEntry(""); setAnalysis(""); setPageStickers([]); setSelectedStickerId(null); setMessage(""); setShowStickers(false); setOpenMenuId(null);
+    setScreen("new"); setSelectedEntry(null); setEntry(""); setAnalysis(""); setPageStickers([]); setSelectedStickerId(null); setDoodleData(""); setMessage(""); setShowStickers(false); setOpenMenuId(null);
   }
 
   function openJournal() {
@@ -110,11 +118,11 @@ function App() {
   }
 
   function viewEntry(item) {
-    setSelectedEntry(item); setEntry(item.text || ""); setPageStickers(item.stickers || []); setSelectedStickerId(null); setAnalysis(""); setMessage(""); setScreen("view"); setShowStickers(false); setOpenMenuId(null);
+    setSelectedEntry(item); setEntry(item.text || ""); setPageStickers(item.stickers || []); setDoodleData(item.doodle || ""); setSelectedStickerId(null); setAnalysis(""); setMessage(""); setScreen("view"); setShowStickers(false); setOpenMenuId(null);
   }
 
   function editEntry(item) {
-    setSelectedEntry(item); setEntry(item.text || ""); setPageStickers(item.stickers || []); setSelectedStickerId(null); setAnalysis(""); setMessage(""); setScreen("edit"); setShowStickers(false); setOpenMenuId(null);
+    setSelectedEntry(item); setEntry(item.text || ""); setPageStickers(item.stickers || []); setDoodleData(item.doodle || ""); setSelectedStickerId(null); setAnalysis(""); setMessage(""); setScreen("edit"); setShowStickers(false); setOpenMenuId(null);
   }
 
   async function deleteEntry(item) {
@@ -189,13 +197,13 @@ function App() {
     if (!entry.trim()) return setMessage("Please write something first.");
     try {
       if (screen === "edit" && selectedEntry) {
-        await updateDoc(doc(db, "journalEntries", selectedEntry.id), { text: entry.trim(), stickers: pageStickers, mood: todayMood || selectedEntry.mood || null });
+        await updateDoc(doc(db, "journalEntries", selectedEntry.id), { text: entry.trim(), stickers: pageStickers, mood: todayMood || selectedEntry.mood || null, doodle: doodleData || null });
         setMessage("Your journal entry was updated! 💜");
-        setSelectedEntry((current) => current ? { ...current, text: entry.trim(), stickers: pageStickers, mood: todayMood || current.mood || null } : current);
+        setSelectedEntry((current) => current ? { ...current, text: entry.trim(), stickers: pageStickers, mood: todayMood || current.mood || null, doodle: doodleData || null } : current);
         setScreen("view");
       } else {
-        await addDoc(collection(db, "journalEntries"), { userId: user.uid, text: entry.trim(), createdAt: new Date(), stickers: pageStickers, mood: todayMood || null });
-        setEntry(""); setAnalysis(""); setPageStickers([]); setSelectedStickerId(null); setMessage("Journal entry saved! 💜");
+        await addDoc(collection(db, "journalEntries"), { userId: user.uid, text: entry.trim(), createdAt: new Date(), stickers: pageStickers, mood: todayMood || null, doodle: doodleData || null });
+        setEntry(""); setAnalysis(""); setPageStickers([]); setSelectedStickerId(null); setDoodleData(""); setMessage("Journal entry saved! 💜");
       }
     } catch (error) { console.error(error); setMessage("Could not save your entry."); }
   }
@@ -298,6 +306,7 @@ function App() {
                 </div>}
 
                 <div className="book-area"><div className="book-shell"><div className="book-spine"><span>◦</span><span>◦</span><span>◦</span><span>◦</span><span>◦</span></div><div className="book-page" ref={bookRef} onClick={() => setSelectedStickerId(null)}><div className="book-page-top"><div className="book-title">Dear Journal,</div><div className="today-date">{formatDateTime(displayedDate)}</div></div><div className="margin-line" /><textarea value={entry} onChange={(e) => isEditable && setEntry(e.target.value)} readOnly={!isEditable} placeholder="Write about your day..." />
+                  {doodleData && <img className="doodle-layer" src={doodleData} alt="" draggable={false} />}
                   {pageStickers.map((sticker) => <div key={sticker.id} className={`placed-sticker ${selectedStickerId === sticker.id ? "selected" : ""}`} style={{ left: `${sticker.x}%`, top: `${sticker.y}%`, fontSize: `${sticker.size}px`, transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg)` }} onPointerDown={(event) => startStickerDrag(event, sticker)} onClick={(event) => { event.stopPropagation(); setSelectedStickerId(sticker.id); }}>{sticker.emoji}{selectedStickerId === sticker.id && isEditable && <div className="sticker-controls" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}><button onClick={() => resizeSticker(-5)}>−</button><button onClick={() => resizeSticker(5)}>+</button><button onClick={() => rotateSticker(-15)}>↺</button><button onClick={() => rotateSticker(15)}>↻</button><button className="remove-sticker" onClick={removeSelectedSticker}>×</button></div>}</div>)}
                   <div className="book-hint">Your thoughts. Your page. Your little world. ♡</div></div>
                   {showStickers && isEditable && <div className="sticker-panel" onClick={(e) => e.stopPropagation()}><div className="sticker-panel-title"><div><strong>Stickers ✨</strong><small>Make your page yours</small></div><button className="close-stickers" onClick={() => setShowStickers(false)}>×</button></div><div className="sticker-tabs">{categories.map((category) => <button key={category} className={stickerCategory === category ? "active" : ""} onClick={() => setStickerCategory(category)}>{category}</button>)}</div><div className="sticker-grid">{stickerSets[stickerCategory].map((sticker, index) => <button key={`${sticker}-${index}`} className="sticker-choice" onClick={() => addSticker(sticker)}>{sticker}</button>)}</div><p className="sticker-help">Click to add. Drag to move. Select a sticker for resize, rotate and remove.</p></div>}

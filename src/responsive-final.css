@@ -12,6 +12,9 @@ body { overflow-x: hidden; }
 .placed-sticker { position: absolute !important; touch-action: none !important; user-select: none !important; -webkit-user-select: none !important; cursor: grab !important; z-index: 20 !important; }
 .placed-sticker:active { cursor: grabbing !important; }
 
+/* Persisted doodle layer: same geometry as the drawing canvas it came from. */
+.doodle-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+
 @media (max-width: 900px) {
   .topbar { height: auto !important; min-height: 88px; padding: 14px 20px !important; }
   .workspace { min-height: calc(100vh - 88px) !important; }

@@ -50,6 +50,11 @@
       }
       #${STICKER_TOOLBAR_ID} button:hover { background: #5a477d !important; }
       #${STICKER_TOOLBAR_ID} .remove-sticker { background: #70415d !important; }
+      #${DOODLE_ID} .mm-doodle-eraser.active {
+        background: #70415d !important;
+        color: #fff !important;
+        box-shadow: inset 0 0 0 2px #f2b8cd !important;
+      }
 
       /* Doodle is a child of .book-page, so .book-page overflow:hidden is the hard boundary. */
       #${DOODLE_ID} {
@@ -173,6 +178,10 @@
     remove(DOODLE_ID);
     const book = document.querySelector(".book-page");
     if (!book) return;
+    // Draw on top of the saved drawing so the user can add to it on any
+    // editable screen. The React state (and thus the saved entry) is only
+    // replaced when this overlay closes via Done.
+    const existing = book.querySelector("img.doodle-layer");
 
     const overlay = document.createElement("div");
     overlay.id = DOODLE_ID;
@@ -192,6 +201,7 @@
         <button class="mm-doodle-size active" data-size="3" type="button">S</button>
         <button class="mm-doodle-size" data-size="6" type="button">M</button>
         <button class="mm-doodle-size" data-size="10" type="button">L</button>
+        <button class="mm-doodle-eraser" type="button" title="Eraser">🧽 Eraser</button>
         <button class="done" type="button">Done</button>
       </div>`;
 
@@ -212,6 +222,13 @@
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#7655d3";
     ctx.lineWidth = 3;
+    if (existing) {
+      const image = new Image();
+      image.onload = () => {
+        ctx.drawImage(image, 0, 0, width, height);
+      };
+      image.src = existing.src;
+    }
 
     let drawing = false;
     let last = null;
@@ -262,21 +279,62 @@
       ctx.clearRect(0, 0, width, height);
       history = [];
     };
+    // Eraser mode: strokes punch through existing pixels (destination-out).
+    // Pencil color/width and eraser width are remembered per mode, so picking
+    // a size or color keeps working exactly as before for the pencil.
+    const colorButtons = [...overlay.querySelectorAll(".mm-doodle-color")];
+    const sizeButtons = [...overlay.querySelectorAll(".mm-doodle-size")];
+    const eraserButton = overlay.querySelector(".mm-doodle-eraser");
+    let eraser = false;
+    const pencil = { color: ctx.strokeStyle, width: ctx.lineWidth };
+    let eraserWidth = 15;
+
+    const setMode = (next) => {
+      eraser = next;
+      eraserButton.classList.toggle("active", eraser);
+      canvas.style.cursor = eraser ? "cell" : "crosshair";
+      if (eraser) {
+        colorButtons.forEach((item) => item.classList.remove("active"));
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.strokeStyle = "rgba(0,0,0,1)";
+        ctx.lineWidth = eraserWidth;
+      } else {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = pencil.color;
+        ctx.lineWidth = pencil.width;
+        colorButtons.find((item) => item.dataset.color === pencil.color)?.classList.add("active");
+      }
+    };
+
+    eraserButton.onclick = () => setMode(!eraser);
+
     overlay.querySelectorAll(".mm-doodle-color").forEach((button) => {
       button.onclick = () => {
-        ctx.strokeStyle = button.dataset.color;
-        overlay.querySelectorAll(".mm-doodle-color").forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
+        pencil.color = button.dataset.color;
+        setMode(false);
       };
     });
     overlay.querySelectorAll(".mm-doodle-size").forEach((button) => {
       button.onclick = () => {
-        ctx.lineWidth = Number(button.dataset.size);
-        overlay.querySelectorAll(".mm-doodle-size").forEach((item) => item.classList.remove("active"));
+        const size = Number(button.dataset.size);
+        // Eraser tips run wider than pencil tips at the same S/M/L setting.
+        if (eraser) eraserWidth = size * 3; else pencil.width = size;
+        sizeButtons.forEach((item) => item.classList.remove("active"));
         button.classList.add("active");
+        ctx.lineWidth = eraser ? eraserWidth : pencil.width;
       };
     });
     overlay.querySelector(".done").onclick = () => {
+      // Persist the drawing: hand the bitmap to React (mindmate-doodle-data) so
+      // App state can store it on the entry when the user saves. A blank
+      // canvas (cleared or never drawn on) is ignored.
+      const dataUrl = canvas.toDataURL("image/png");
+      const blank = document.createElement("canvas");
+      blank.width = canvas.width;
+      blank.height = canvas.height;
+      if (dataUrl !== blank.getContext("2d").canvas.toDataURL("image/png")) {
+        window.dispatchEvent(new CustomEvent("mindmate-doodle-data", { detail: { dataUrl } }));
+      }
       document.body.classList.remove("mindmate-doodling");
       overlay.remove();
     };

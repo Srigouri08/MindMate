@@ -309,8 +309,13 @@
     document.addEventListener("pointerup", schedule, true);
     window.addEventListener("resize", schedule, { passive: true });
     window.addEventListener("scroll", schedule, { passive: true });
+    // React updates sticker positions through style attributes while dragging.
+    // Watching style mutations here created a feedback loop: positioning the
+    // toolbar changed style -> observer fired -> toolbar repositioned again.
+    // Child-list changes are enough to detect new selections/screens, while
+    // pointerup/resize/scroll already handle positioning updates.
     const observer = new MutationObserver(schedule);
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });

@@ -83,7 +83,26 @@
 
   function start() {
     sync();
-    new MutationObserver(() => requestAnimationFrame(sync)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+    let frame = 0;
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(sync);
+    };
+    // React replaces sections of the page frequently. Observe DOM additions,
+    // not every class mutation, to avoid running sync on every render.
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const appObserver = new MutationObserver(schedule);
+    const watchApp = () => {
+      const app = document.querySelector(".app");
+      if (app && !appObserver._watching) {
+        appObserver._watching = true;
+        appObserver.observe(app, { attributes: true, attributeFilter: ["class"] });
+      }
+    };
+    watchApp();
+    const bodyObserver = new MutationObserver(() => watchApp());
+    bodyObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });

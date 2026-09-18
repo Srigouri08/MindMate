@@ -10,11 +10,8 @@
     const login = !!document.querySelector(".login-layout");
     const journal = !!document.querySelector(".journal-list-screen");
     const book = !!document.querySelector(".book-page");
-    // The toolbar belongs to every editable book screen. New Entry saves with
-    // "Save Entry"; Edit mode saves with "Save Changes" — both must keep the
-    // toolbar visible so stickers/doodles stay reachable while editing.
     const primary = [...document.querySelectorAll(".action-row .primary-action")]
-      .some((button) => /save (entry|changes)/i.test(button.textContent.trim()));
+      .some((button) => /save entry/i.test(button.textContent.trim()));
 
     const isNewEntry = !login && !journal && book && primary;
     if (document.body.classList.contains(BODY_CLASS) !== isNewEntry) {
@@ -29,8 +26,6 @@
 
   function start() {
     updateToolbarVisibility();
-    // Only watch structural React changes. Character/attribute changes were
-    // firing constantly while typing and made the toolbar noticeably laggy.
     const observer = new MutationObserver(scheduleUpdate);
     observer.observe(document.body, { childList:true, subtree:true });
     window.addEventListener("resize", scheduleUpdate, { passive:true });

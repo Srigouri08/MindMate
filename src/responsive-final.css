@@ -12,9 +12,6 @@ body { overflow-x: hidden; }
 .placed-sticker { position: absolute !important; touch-action: none !important; user-select: none !important; -webkit-user-select: none !important; cursor: grab !important; z-index: 20 !important; }
 .placed-sticker:active { cursor: grabbing !important; }
 
-/* Persisted doodle layer: same geometry as the drawing canvas it came from. */
-.doodle-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-
 @media (max-width: 900px) {
   .topbar { height: auto !important; min-height: 88px; padding: 14px 20px !important; }
   .workspace { min-height: calc(100vh - 88px) !important; }
@@ -32,7 +29,7 @@ body { overflow-x: hidden; }
   .brand h1 { font-size: 23px !important; letter-spacing: -.5px; }
   .brand span { font-size: 7px; letter-spacing: 1.8px; }
   .top-actions { gap: 6px; min-width: 0; }
-  .icon-button { width: 42px !important; height: 42px !important; border-radius: 13px; font-size: 19px; }
+  .icon-button { width: 42px !important; height: 42px !important; border-radius: 13px; font-size: 19px !important; }
   .profile-pill { max-width: 125px; }
   .profile-pill strong { max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

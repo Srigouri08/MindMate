@@ -5,6 +5,7 @@ import "./mindmate-theme.css";
 import "./mindmate-toolbar-theme.css";
 import "./responsive-fixes.css";
 import "./responsive-final.css";
+import "./mindmate-screen-toolbar.js";
 import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(

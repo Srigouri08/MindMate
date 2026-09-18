@@ -1,22 +1,14 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import './mindmate-theme.css'
-import './mindmate-toolbar-theme.css'
-import './responsive-fixes.css'
-import './responsive-final.css'
-import './hydrationCard.js'
-import './sidebarFeatures.js'
-import './stickerToolbarFix.js'
-import './creativeToolsFix.js'
-import './creativePolishFix.js'
-import './mindmate-screen-toolbar.js'
-import './journalEnhancements.js'
-import './stickerControlsInteractionFix.js'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import "./mindmate-theme.css";
+import "./mindmate-toolbar-theme.css";
+import "./responsive-fixes.css";
+import "./responsive-final.css";
+import App from "./App.jsx";
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App />
-  </StrictMode>,
-)
+  </StrictMode>
+);

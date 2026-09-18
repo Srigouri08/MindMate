@@ -3,7 +3,10 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  // Firebase web API keys are client-side configuration, not authentication secrets.
+  // Prefer the Render/Vite environment variable, but keep the known project key as
+  // a fallback so a missing Render env var does not make the entire React app crash.
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD5C4BiWIVeDaH0sTOxSZfzHgQumdrT9bE",
   authDomain: "mindmate-2b226.firebaseapp.com",
   projectId: "mindmate-2b226",
   storageBucket: "mindmate-2b226.firebasestorage.app",
